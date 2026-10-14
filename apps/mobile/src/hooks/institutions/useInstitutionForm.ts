@@ -39,7 +39,7 @@ export function useInstitutionForm({ initialName, initialColor, initialIcon, ret
   const previewName = name.trim() || 'Nome da Instituição'
 
   const openAppearance = () => {
-    router.push({ pathname: '/instituicao/aparencia', params: { color, icon, name, returnTo } })
+    router.push({ pathname: '/institution/appearance', params: { color, icon, name, returnTo } })
   }
 
   return {

@@ -1,7 +1,7 @@
 import { InstitutionForm } from '@/components/finance/institutions/InstitutionForm'
-import { useNovaInstituicao } from '@/hooks/institutions/useNovaInstituicao'
+import { useEditInstitution } from '@/hooks/institutions/useEditInstitution'
 
-export default function NovaInstituicaoScreen() {
+export default function EditInstitutionScreen() {
   const {
     name,
     setName,
@@ -16,12 +16,12 @@ export default function NovaInstituicaoScreen() {
     openAppearance,
     handleSave,
     handleClose,
-  } = useNovaInstituicao()
+  } = useEditInstitution()
 
   return (
     <InstitutionForm
-      title="Nova Instituição"
-      submitLabel="Adicionar Instituição"
+      title="Editar Instituição"
+      submitLabel="Salvar Alterações"
       name={name}
       onNameChange={setName}
       onNameBlur={() => validateName(name)}
@@ -31,7 +31,7 @@ export default function NovaInstituicaoScreen() {
       nameError={nameError}
       submitDisabled={!isFormValid || isSaving}
       successVisible={showSuccess}
-      successMessage="Instituição criada com sucesso."
+      successMessage="Instituição atualizada com sucesso."
       onOpenAppearance={openAppearance}
       onSubmit={handleSave}
       onClose={handleClose}

@@ -1,18 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import {
-  categoryColors,
-  categoryIcons,
-  getAccount,
-  getCategory,
-  mockPaymentHistory,
-} from '@/components/finance/recurrences/recurrences-data'
-import type { Recurrence } from '@/components/finance/recurrences/types'
+import type { PaymentHistoryEntry, Recurrence } from '@/components/finance/recurrences/types'
+import { accountQueries } from '@/services/database/repository/account'
+import { categoryQueries } from '@/services/database/repository/category'
 import { useRecurrencesStore } from '@/stores/recurrences'
 import { getNextBillingLabel } from '@/utils/recurrences/dates'
 import type { IconKey } from '@/utils/icons'
 
-export function useRecorrenciaDetails() {
+export function useRecurrenceDetails() {
   const params = useLocalSearchParams<{
     id: string
     description: string
@@ -29,35 +24,63 @@ export function useRecorrenciaDetails() {
 
   const setPendingDeleteId = useRecurrencesStore((state) => state.setPendingDeleteId)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [accountName, setAccountName] = useState(params.accountId ?? '')
+  const [categoryName, setCategoryName] = useState(params.categoryId ?? '')
+  const [icon, setIcon] = useState<IconKey>('tag')
+  const [iconColor, setIconColor] = useState('#4A5060')
 
   const id = params.id ?? ''
   const description = params.description ?? ''
   const amount = parseFloat(params.amount ?? '0')
   const type = params.type ?? 'EXPENSE'
   const frequency = params.frequency ?? 'MONTHLY'
-  const dueDay = parseInt(params.dueDay ?? '1')
+  const dueDay = parseInt(params.dueDay ?? '1', 10)
   const accountId = params.accountId ?? ''
   const categoryId = params.categoryId ?? ''
   const subcategoryId = params.subcategoryId ?? ''
   const startDate = params.startDate ?? ''
   const isActive = params.isActive === '1'
 
+  useEffect(() => {
+    let active = true
+
+    if (accountId) {
+      void accountQueries
+        .getById(accountId)
+        .then((account) => {
+          if (active) setAccountName(account.name)
+        })
+        .catch(() => undefined)
+    }
+
+    if (categoryId) {
+      void categoryQueries
+        .getById(categoryId)
+        .then((category) => {
+          if (!active) return
+          setCategoryName(category.name)
+          setIcon((category.icon as IconKey) || 'tag')
+          setIconColor(category.color || '#4A5060')
+        })
+        .catch(() => undefined)
+    }
+
+    return () => {
+      active = false
+    }
+  }, [accountId, categoryId])
+
   const isExpense = type === 'EXPENSE'
-  const accountName = getAccount(accountId)?.name ?? accountId
-  const categoryName = getCategory(categoryId)?.name ?? categoryId
   const frequencyLabel =
     frequency === 'MONTHLY' ? 'Mensal' : frequency === 'WEEKLY' ? 'Semanal' : 'Anual'
   const typeLabel = `${categoryName} ${frequencyLabel}`
 
-  const icon: IconKey = categoryIcons[categoryId] ?? 'tag'
-  const iconColor = categoryColors[categoryId] ?? '#4A5060'
-
-  const history = mockPaymentHistory[id] ?? []
+  const history: PaymentHistoryEntry[] = []
   const annualProjection = amount * 12
   const nextBillingLabel = getNextBillingLabel(dueDay)
 
   const [intPart, decPart] = amount.toFixed(2).split('.')
-  const intFormatted = parseInt(intPart).toLocaleString('pt-BR')
+  const intFormatted = parseInt(intPart, 10).toLocaleString('pt-BR')
 
   const recurrenceForModal: Recurrence = {
     id,
@@ -76,7 +99,7 @@ export function useRecorrenciaDetails() {
 
   const handleEdit = () => {
     router.push({
-      pathname: '/recorrencia/nova',
+      pathname: '/recurrence/new',
       params: {
         id,
         description,

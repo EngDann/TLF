@@ -17,7 +17,7 @@ export function InstitutionsList({
   institutions,
   isLoading = false,
   error,
-  emptyMessage = 'Nenhuma instituicao cadastrada.',
+  emptyMessage = 'Nenhuma instituição cadastrada.',
   onEditInstitution,
   onDeleteInstitution,
 }: Props) {

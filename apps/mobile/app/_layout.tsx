@@ -46,7 +46,8 @@ export default function RootLayout() {
           <Stack.Screen name="(budget)" options={{ presentation: 'modal' }} />
           <Stack.Screen name="notifications" />
           <Stack.Screen name="edit-record/[id]" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="instituicao" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="institution" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="recurrence" />
         </Stack>
       </GestureHandlerRootView>
     </DatabaseProvider>

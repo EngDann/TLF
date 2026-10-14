@@ -9,7 +9,7 @@ import { SubCategory } from './models/subCategory'
 import { Institution } from './models/institution'
 import { Account } from './models/account'
 import { Invoice } from './models/invoice'
-import { Recurrence } from './models/recurrece'
+import { Recurrence } from './models/recurrence'
 import { Budget } from './models/budget'
 
 const adapter = new SQLiteAdapter({

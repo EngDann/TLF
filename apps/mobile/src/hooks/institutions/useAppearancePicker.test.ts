@@ -96,13 +96,13 @@ describe('useAppearancePicker', () => {
       })
 
       expect(mockedNavigate).toHaveBeenCalledWith({
-        pathname: '/instituicao/nova',
+        pathname: '/institution/new',
         params: { color: appearanceColors[1], icon: appearanceIcons[1] },
       })
     })
 
     it('should navigate to returnTo and forward the name when provided', () => {
-      mockParams = { returnTo: '/instituicao/inst-1', name: 'Nubank' }
+      mockParams = { returnTo: '/institution/inst-1', name: 'Nubank' }
 
       const { result } = renderHook(() => useAppearancePicker())
 
@@ -111,7 +111,7 @@ describe('useAppearancePicker', () => {
       })
 
       expect(mockedNavigate).toHaveBeenCalledWith({
-        pathname: '/instituicao/inst-1',
+        pathname: '/institution/inst-1',
         params: {
           color: defaultAppearanceColor,
           icon: defaultAppearanceIcon,

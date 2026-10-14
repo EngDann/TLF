@@ -7,10 +7,10 @@ import type { TransactionType } from './types'
 type Props = {
   value: TransactionType
   onChange: (type: TransactionType) => void
-  onRecorrencias?: () => void
+  onRecurrences?: () => void
 }
 
-export function TransactionTypeTabs({ value, onChange, onRecorrencias }: Props) {
+export function TransactionTypeTabs({ value, onChange, onRecurrences }: Props) {
   const theme = useThemeColor()
 
   return (
@@ -45,13 +45,13 @@ export function TransactionTypeTabs({ value, onChange, onRecorrencias }: Props) 
         )
       })}
 
-      {onRecorrencias ? (
+      {onRecurrences ? (
         <Pressable
-          onPress={onRecorrencias}
+          onPress={onRecurrences}
           style={[styles.tab, { borderBottomColor: 'transparent' }]}
         >
           <ThemedText
-            text={TRANSACTION_FORM_COPY.recorrenciasTab}
+            text={TRANSACTION_FORM_COPY.recurrencesTab}
             variant="label"
             tone="muted"
             style={styles.label}

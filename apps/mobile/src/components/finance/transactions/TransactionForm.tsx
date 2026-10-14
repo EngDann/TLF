@@ -49,7 +49,7 @@ export function TransactionForm({ title, mode, initialValues, onSuccess }: Props
     successAlertVisible,
     dismissSuccessAlert,
     handleSubmit,
-    openRecorrencias,
+    openRecurrences,
   } = useTransactionFormScreen({ title, mode, initialValues, onSuccess })
 
   return (
@@ -61,7 +61,7 @@ export function TransactionForm({ title, mode, initialValues, onSuccess }: Props
       <TransactionTypeTabs
         value={form.type}
         onChange={form.handleTypeChange}
-        onRecorrencias={openRecorrencias}
+        onRecurrences={openRecurrences}
       />
 
       <ScrollView

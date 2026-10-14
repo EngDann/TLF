@@ -3,7 +3,7 @@ import { Animated } from 'react-native'
 import type { Recurrence } from '@/components/finance/recurrences/types'
 import { MONTHS_FULL } from '@/utils/recurrences/dates'
 
-export function useConfirmacoesPendentes(
+export function usePendingConfirmations(
   recurrences: Recurrence[],
   confirmedIds: string[],
   skippedIds: string[],

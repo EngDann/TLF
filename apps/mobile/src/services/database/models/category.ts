@@ -2,7 +2,7 @@ import { Model, Q } from '@nozbe/watermelondb'
 import { date, field, lazy, readonly } from '@nozbe/watermelondb/decorators'
 import type { SubCategory } from './subCategory'
 import type { Budget } from './budget'
-import type { Recurrence } from './recurrece'
+import type { Recurrence } from './recurrence'
 import type { Transaction } from './transaction'
 
 export class Category extends Model {

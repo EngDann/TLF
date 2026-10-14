@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 import { router } from 'expo-router'
 import { ArrowLeft, Bell, Plus } from 'lucide-react-native'
-import { ConfirmacoesPendentes } from '@/components/finance/recurrences/ConfirmacoesPendentes'
+import { PendingConfirmations } from '@/components/finance/recurrences/PendingConfirmations'
 import { RecurrenceSummaryCard } from '@/components/finance/recurrences/RecurrenceSummaryCard'
 import { RecurrencesList } from '@/components/finance/recurrences/RecurrencesList'
 import { SectionDivider } from '@/components/ui/SectionDivider'
@@ -10,9 +10,9 @@ import { ThemedBackground } from '@/components/ui/ThemedBackground'
 import { ThemedScrollArea } from '@/components/ui/ThemedScrollArea'
 import { ThemedText } from '@/components/ui/ThemedText'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useRecorrenciasScreen } from '@/hooks/recurrences/useRecorrenciasScreen'
+import { useRecurrencesScreen } from '@/hooks/recurrences/useRecurrencesScreen'
 
-export default function RecorrenciasScreen() {
+export default function RecurrencesScreen() {
   const theme = useThemeColor()
   const {
     recurrences,
@@ -26,7 +26,7 @@ export default function RecorrenciasScreen() {
     handleConfirmRecurrence,
     handleSkipRecurrence,
     handleUndoRecurrence,
-  } = useRecorrenciasScreen()
+  } = useRecurrencesScreen()
 
   return (
     <ThemedBackground>
@@ -50,7 +50,7 @@ export default function RecorrenciasScreen() {
 
         <RecurrenceSummaryCard totalMonthly={totalMonthly} activeCount={activeCount} />
 
-        <ConfirmacoesPendentes
+        <PendingConfirmations
           recurrences={recurrences}
           confirmedIds={confirmedIds}
           skippedIds={skippedIds}
@@ -65,7 +65,7 @@ export default function RecorrenciasScreen() {
       </ThemedScrollArea>
 
       <Pressable
-        onPress={() => router.push('/recorrencia/nova')}
+        onPress={() => router.push('/recurrence/new')}
         style={({ pressed }) => [
           styles.fab,
           { backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1 },

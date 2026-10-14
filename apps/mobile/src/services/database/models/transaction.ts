@@ -10,7 +10,7 @@ import {
 import type { Account } from './account'
 import type { Category } from './category'
 import type { Invoice } from './invoice'
-import type { Recurrence } from './recurrece'
+import type { Recurrence } from './recurrence'
 import type { SubCategory } from './subCategory'
 
 export const transactionTypes = {

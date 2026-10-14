@@ -11,7 +11,7 @@ import {
 } from '@/utils/institutions/appearance'
 import type { IconKey } from '@/utils/icons'
 
-const DEFAULT_RETURN_TO = '/instituicao/nova'
+const DEFAULT_RETURN_TO = '/institution/new'
 
 export function useAppearancePicker() {
   const params = useLocalSearchParams<{

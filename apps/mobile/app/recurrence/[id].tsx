@@ -9,9 +9,9 @@ import { ThemedBackground } from '@/components/ui/ThemedBackground'
 import { ThemedScrollArea } from '@/components/ui/ThemedScrollArea'
 import { ThemedText } from '@/components/ui/ThemedText'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useRecorrenciaDetails } from '@/hooks/recurrences/useRecorrenciaDetails'
+import { useRecurrenceDetails } from '@/hooks/recurrences/useRecurrenceDetails'
 
-export default function RecorrenciaDetailsScreen() {
+export default function RecurrenceDetailsScreen() {
   const theme = useThemeColor()
   const {
     description,
@@ -34,7 +34,7 @@ export default function RecorrenciaDetailsScreen() {
     setShowDeleteModal,
     handleEdit,
     handleDeleteConfirm,
-  } = useRecorrenciaDetails()
+  } = useRecurrenceDetails()
 
   const amountColor = isExpense ? theme.expense : theme.income
   const statusColor = isActive ? theme.income : theme.mutedForeground

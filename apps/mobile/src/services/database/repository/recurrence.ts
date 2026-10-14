@@ -1,5 +1,5 @@
 import { database } from '..'
-import { Recurrence } from '../models/recurrece'
+import { Recurrence } from '../models/recurrence'
 
 const RECURRENCES_TABLE = 'recurrences'
 
@@ -34,6 +34,10 @@ const applyRecurrenceFields = (
   if (input.endDate !== undefined) recurrence.endDate = input.endDate
 }
 
+export const getAllRecurrences = async () => {
+  return recurrencesCollection().query().fetch()
+}
+
 export const getRecurrenceById = async (id: string) => recurrencesCollection().find(id)
 
 export const createRecurrence = async (input: RecurrenceInput) => {
@@ -62,6 +66,7 @@ export const markRecurrenceAsDeleted = async (id: string) => {
 
 export const recurrenceQueries = {
   table: RECURRENCES_TABLE,
+  getAll: getAllRecurrences,
   getById: getRecurrenceById,
   create: createRecurrence,
   update: updateRecurrence,

@@ -2,7 +2,7 @@ import { Animated, Pressable, View } from 'react-native'
 import { AppIcon } from '@/components/ui/AppIcon'
 import { ThemedText } from '@/components/ui/ThemedText'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { useConfirmacoesPendentes } from '@/hooks/recurrences/useConfirmacoesPendentes'
+import { usePendingConfirmations } from '@/hooks/recurrences/usePendingConfirmations'
 import { ConfirmCard } from '../ConfirmCard'
 import { styles } from './style'
 import type { Recurrence } from '../types'
@@ -16,7 +16,7 @@ type Props = {
   onUndo: (id: string) => void
 }
 
-export function ConfirmacoesPendentes({
+export function PendingConfirmations({
   recurrences,
   confirmedIds,
   skippedIds,
@@ -34,7 +34,7 @@ export function ConfirmacoesPendentes({
     allDone,
     toggleCollapse,
     chevronRotate,
-  } = useConfirmacoesPendentes(recurrences, confirmedIds, skippedIds)
+  } = usePendingConfirmations(recurrences, confirmedIds, skippedIds)
 
   return (
     <View style={[styles.container, { display: due.length === 0 ? 'none' : 'flex' }]}>

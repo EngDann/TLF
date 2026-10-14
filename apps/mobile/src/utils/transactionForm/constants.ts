@@ -40,5 +40,5 @@ export const TRANSACTION_FORM_COPY = {
   editSuccessTitle: 'Registro atualizado!',
   editSuccessMessage: 'Suas alterações foram salvas com sucesso.',
   notesPlaceholder: 'Adicionar nota...',
-  recorrenciasTab: 'Recorrências',
+  recurrencesTab: 'Recorrências',
 } as const

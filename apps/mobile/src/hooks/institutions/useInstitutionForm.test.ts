@@ -15,7 +15,7 @@ const defaultArgs = {
   initialName: '',
   initialColor: '#6E72FF',
   initialIcon: 'landmark' as const,
-  returnTo: '/instituicao/nova',
+  returnTo: '/institution/new',
 }
 
 describe('useInstitutionForm', () => {
@@ -130,12 +130,12 @@ describe('useInstitutionForm', () => {
       })
 
       expect(mockedPush).toHaveBeenCalledWith({
-        pathname: '/instituicao/aparencia',
+        pathname: '/institution/appearance',
         params: {
           color: '#6E72FF',
           icon: 'landmark',
           name: 'Nubank',
-          returnTo: '/instituicao/nova',
+          returnTo: '/institution/new',
         },
       })
     })

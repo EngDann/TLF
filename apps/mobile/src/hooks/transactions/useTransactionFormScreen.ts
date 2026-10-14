@@ -64,8 +64,8 @@ export function useTransactionFormScreen({
     })
   }, [form])
 
-  const openRecorrencias = useCallback(() => {
-    router.push('/recorrencia')
+  const openRecurrences = useCallback(() => {
+    router.push('/recurrence')
   }, [])
 
   return {
@@ -89,7 +89,7 @@ export function useTransactionFormScreen({
     successAlertVisible,
     dismissSuccessAlert,
     handleSubmit,
-    openRecorrencias,
+    openRecurrences,
   }
 }
 

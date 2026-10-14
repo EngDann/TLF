@@ -27,16 +27,16 @@ import { EditScopeModal } from '@/components/finance/recurrences/EditScopeModal'
 import { AmountDisplay } from '@/components/finance/transactions/AmountDisplay'
 import { NumericKeypad } from '@/components/finance/transactions/NumericKeypad'
 import { DatePickerModal } from '@/components/ui/DatePickerModal'
-import { mockAccounts, mockCategories } from '@/components/finance/recurrences/recurrences-data'
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedBackground } from '@/components/ui/ThemedBackground'
 import {
-  useNovaRecorrencia,
+  useNewRecurrence,
   frequencyOptions,
   formatDateDisplay,
-} from '@/hooks/recurrences/useNovaRecorrencia'
+} from '@/hooks/recurrences/useNewRecurrence'
+import type { IconKey } from '@/utils/icons'
 import { TransactionType } from '@/services/database/models/transaction'
-export default function NovaRecorrenciaScreen() {
+export default function NewRecurrenceScreen() {
   const theme = useThemeColor()
   const {
     isEditing,
@@ -89,12 +89,14 @@ export default function NovaRecorrenciaScreen() {
     selectedCategory,
     subcategoryOptions,
     selectedSubcategory,
+    accounts,
+    categories,
     handleKeypad,
     handleSave,
     handleScopeConfirm,
     validateField,
     NO_SUBCATEGORY,
-  } = useNovaRecorrencia()
+  } = useNewRecurrence()
 
   return (
     <ThemedBackground>
@@ -293,7 +295,7 @@ export default function NovaRecorrenciaScreen() {
             </Pressable>
             {showAccountPicker && (
               <View style={[styles.pickerList, { backgroundColor: theme.surface }]}>
-                {mockAccounts.map((opt) => (
+                {accounts.map((opt) => (
                   <Pressable
                     key={opt.id}
                     onPress={() => {
@@ -327,11 +329,15 @@ export default function NovaRecorrenciaScreen() {
               style={[styles.dropdownRow, { backgroundColor: theme.surface }]}
             >
               <ThemedText text={selectedCategory.name} variant="body" style={styles.dropdownText} />
-              <AppIcon name={selectedCategory.icon} size={20} color={theme.mutedForeground} />
+              <AppIcon
+                name={(selectedCategory.icon as IconKey) || 'tag'}
+                size={20}
+                color={theme.mutedForeground}
+              />
             </Pressable>
             {showCategoryPicker && (
               <View style={[styles.pickerList, { backgroundColor: theme.surface }]}>
-                {mockCategories.map((opt) => (
+                {categories.map((opt) => (
                   <Pressable
                     key={opt.id}
                     onPress={() => {
@@ -345,7 +351,7 @@ export default function NovaRecorrenciaScreen() {
                     ]}
                   >
                     <AppIcon
-                      name={opt.icon}
+                      name={(opt.icon as IconKey) || 'tag'}
                       size={18}
                       color={opt.id === categoryId ? theme.success : theme.mutedForeground}
                     />

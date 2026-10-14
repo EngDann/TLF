@@ -1,13 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import {
-  mockAccounts,
-  mockCategories,
-  getCategory,
-  getSubcategoriesForCategory,
-} from '@/components/finance/recurrences/recurrences-data'
-import type { RecurrenceFrequency, RecurrenceType } from '@/components/finance/recurrences/types'
+import type {
+  RecurrenceAccountOption,
+  RecurrenceCategoryOption,
+  RecurrenceFrequency,
+  RecurrenceSubcategoryOption,
+  RecurrenceType,
+} from '@/components/finance/recurrences/types'
 import type { EditScope } from '@/hooks/recurrences/useEditScopeModal'
+import { accountQueries } from '@/services/database/repository/account'
+import { categoryQueries } from '@/services/database/repository/category'
+import { recurrenceQueries } from '@/services/database/repository/recurrence'
+import { subCategoryQueries } from '@/services/database/repository/subCategory'
+import type { IconKey } from '@/utils/icons'
 
 const MAX_CENTS = 9_999_999
 const NO_SUBCATEGORY = ''
@@ -36,7 +41,7 @@ export const formatDateDisplay = (date: Date | null): string => {
 
 type Errors = Partial<Record<string, string>>
 
-export function useNovaRecorrencia() {
+export function useNewRecurrence() {
   const params = useLocalSearchParams<{
     id?: string
     description?: string
@@ -53,6 +58,9 @@ export function useNovaRecorrencia() {
 
   const isEditing = !!params.id
 
+  const [accounts, setAccounts] = useState<RecurrenceAccountOption[]>([])
+  const [categories, setCategories] = useState<RecurrenceCategoryOption[]>([])
+  const [subcategories, setSubcategories] = useState<RecurrenceSubcategoryOption[]>([])
   const [type, setType] = useState<RecurrenceType>(params.type ?? 'EXPENSE')
   const [amountCents, setAmountCents] = useState<number>(() => {
     if (params.amount) {
@@ -65,8 +73,8 @@ export function useNovaRecorrencia() {
   const [description, setDescription] = useState(params.description ?? '')
   const [frequency, setFrequency] = useState<string>(params.frequency ?? 'MONTHLY')
   const [dueDay, setDueDay] = useState(params.dueDay ?? '1')
-  const [accountId, setAccountId] = useState(params.accountId ?? mockAccounts[0].id)
-  const [categoryId, setCategoryId] = useState(params.categoryId ?? mockCategories[0].id)
+  const [accountId, setAccountId] = useState(params.accountId ?? '')
+  const [categoryId, setCategoryId] = useState(params.categoryId ?? '')
   const [subcategoryId, setSubcategoryId] = useState<string>(params.subcategoryId ?? NO_SUBCATEGORY)
   const [startDate, setStartDate] = useState<Date | null>(() => parseISODate(params.startDate))
   const [endDate, setEndDate] = useState<Date | null>(null)
@@ -82,6 +90,75 @@ export function useNovaRecorrencia() {
   const [showAccountPicker, setShowAccountPicker] = useState(false)
   const [showCategoryPicker, setShowCategoryPicker] = useState(false)
   const [showSubcategoryPicker, setShowSubcategoryPicker] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    const loadOptions = async () => {
+      try {
+        const [accountRows, categoryRows] = await Promise.all([
+          accountQueries.getAll(),
+          categoryQueries.getAll(),
+        ])
+        if (!active) return
+
+        const nextAccounts = accountRows.map((account) => ({
+          id: account.id,
+          name: account.name,
+        }))
+        const nextCategories = categoryRows.map((category) => ({
+          id: category.id,
+          name: category.name,
+          icon: category.icon,
+          color: category.color,
+        }))
+
+        setAccounts(nextAccounts)
+        setCategories(nextCategories)
+
+        setAccountId((current) => current || nextAccounts[0]?.id || '')
+        setCategoryId((current) => current || nextCategories[0]?.id || '')
+      } catch (error) {
+        console.error('Erro ao carregar opcoes de recorrencia:', error)
+      }
+    }
+
+    void loadOptions()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+
+    if (!categoryId) {
+      setSubcategories([])
+      return
+    }
+
+    void subCategoryQueries
+      .getByCategoryId(categoryId)
+      .then((rows) => {
+        if (!active) return
+        setSubcategories(
+          rows.map((subCategory) => ({
+            id: subCategory.id,
+            categoryId: subCategory.categoryId,
+            name: subCategory.name,
+          })),
+        )
+      })
+      .catch(() => {
+        if (active) setSubcategories([])
+      })
+
+    return () => {
+      active = false
+    }
+  }, [categoryId])
 
   const handleKeypad = (key: string) => {
     setAmountCents((prev) => {
@@ -98,6 +175,7 @@ export function useNovaRecorrencia() {
     if (amountCents <= 0) newErrors.amount = 'Informe um valor maior que zero'
     if (!description.trim()) newErrors.description = 'Campo obrigatório'
     if (!dueDay) newErrors.dueDay = 'Campo obrigatório'
+    if (!accountId) newErrors.accountId = 'Campo obrigatório'
     if (!startDate) newErrors.startDate = 'Campo obrigatório'
     if (!isIndeterminate && !endDate) newErrors.endDate = 'Campo obrigatório'
     setErrors(newErrors)
@@ -121,26 +199,66 @@ export function useNovaRecorrencia() {
     }, 1600)
   }
 
+  const persist = async () => {
+    if (!startDate || !accountId) return
+
+    const payload = {
+      accountId,
+      categoryId: categoryId || null,
+      subCategoryId: subcategoryId || null,
+      description: description.trim(),
+      amount: amountCents / 100,
+      isActive,
+      chargeDate: parseInt(dueDay, 10) || 1,
+      startDate,
+      endDate: isIndeterminate ? null : endDate,
+    }
+
+    setIsSaving(true)
+    try {
+      if (isEditing && params.id) {
+        await recurrenceQueries.update(params.id, payload)
+      } else {
+        await recurrenceQueries.create(payload)
+      }
+      showSuccessAndGoBack()
+    } catch (error) {
+      console.error('Erro ao salvar recorrencia:', error)
+      setErrors((prev) => ({ ...prev, description: 'Não foi possível salvar. Tente novamente.' }))
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   const handleSave = () => {
-    if (!validate()) return
+    if (!validate() || isSaving) return
     if (isEditing) {
       setShowEditScopeModal(true)
       return
     }
-    showSuccessAndGoBack()
+    void persist()
   }
 
   const handleScopeConfirm = (_scope: EditScope) => {
     setShowEditScopeModal(false)
-    showSuccessAndGoBack()
+    void persist()
   }
 
-  const isFormValid = isEditing || (amountCents > 0 && !!description.trim() && startDate != null)
+  const isFormValid =
+    isEditing || (amountCents > 0 && !!description.trim() && startDate != null && !!accountId)
   const selectedFrequencyLabel =
     frequencyOptions.find((f) => f.value === frequency)?.label ?? 'Mensal'
-  const selectedAccount = mockAccounts.find((a) => a.id === accountId) ?? mockAccounts[0]
-  const selectedCategory = getCategory(categoryId) ?? mockCategories[0]
-  const subcategoryOptions = getSubcategoriesForCategory(categoryId)
+  const selectedAccount = accounts.find((a) => a.id === accountId) ?? {
+    id: '',
+    name: 'Selecione',
+  }
+  const selectedCategory = categories.find((c) => c.id === categoryId) ?? {
+    id: '',
+    name: 'Selecione',
+    icon: 'tag' as IconKey,
+    color: '#4A5060',
+  }
+  const subcategoryOptions = subcategories
   const selectedSubcategory = subcategoryOptions.find((s) => s.id === subcategoryId)
 
   return {
@@ -194,6 +312,8 @@ export function useNovaRecorrencia() {
     selectedCategory,
     subcategoryOptions,
     selectedSubcategory,
+    accounts,
+    categories,
     handleKeypad,
     handleSave,
     handleScopeConfirm,

@@ -1,7 +1,7 @@
 import { Model, Q, Relation } from '@nozbe/watermelondb'
 import { date, field, immutableRelation, lazy, readonly } from '@nozbe/watermelondb/decorators'
 import type { Category } from './category'
-import type { Recurrence } from './recurrece'
+import type { Recurrence } from './recurrence'
 import type { Transaction } from './transaction'
 
 export class SubCategory extends Model {
