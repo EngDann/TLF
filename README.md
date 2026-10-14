@@ -1,179 +1,89 @@
-# 💰 TLT Finanças
+# TLT Finanças
 
-<p align="center">
-  <img src="https://via.placeholder.com/900x250.png?text=TLT+Finan%C3%A7as" alt="TLT Finanças Banner" />
-</p>
+Plataforma de gestão financeira pessoal, offline-first, criada para organizar receitas, despesas, orçamentos e recorrências de forma simples.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow" />
-  <img src="https://img.shields.io/badge/version-0.1.0-blue" />
-  <img src="https://img.shields.io/badge/license-MIT-green" />
-  <img src="https://img.shields.io/badge/node-%3E%3D20-green" />
-</p>
+## Stack
 
----
+- **Mobile:** React Native (Expo) + WatermelonDB + Zustand
+- **Backend:** NestJS + Prisma + PostgreSQL
+- **Auth:** Supabase Auth
+- **Sync:** push/pull offline-first entre app e API
 
-## 🌐 Documentação Oficial
+## Estrutura
 
-Nosso portal de documentação, está disponível em: 👉 https://mdsreq-fga-unb.github.io/REQ-2026.1-T02-TLF/
+```text
+TLF/
+├── apps/
+│   ├── backend/   # NestJS API
+│   └── mobile/    # Expo app
+├── package.json   # Turborepo workspaces
+└── .github/CONTRIBUTING.md
+```
 
----
+## Setup
 
-## 📌 Sobre o projeto
+Pré-requisitos: Node.js >= 20, npm >= 10, Docker.
 
-O **TLT Finanças** é uma plataforma de gestão financeira pessoal criada para ajudar usuários a organizarem suas finanças de forma simples, intuitiva e acessível.
+```bash
+git clone https://github.com/EngDann/TLF.git
+cd TLF
+npm install
 
-O projeto tem foco em pessoas que enfrentam dificuldades com controle financeiro, oferecendo uma alternativa às planilhas complexas e ferramentas pouco acessíveis.
-
----
-
-## 🚀 Funcionalidades
-
-- 📊 Painel financeiro consolidado
-- 💸 Registro de receitas e despesas
-- 📅 Planejamento mensal
-- 📈 Relatórios e gráficos
-- 📱 Interface mobile intuitiva
-- 🔄 Sincronização e uso offline
-- 🔐 Segurança de dados
-- 📚 Educação financeira integrada
-
----
-
-## 🧠 Problema abordado
-
-Muitos usuários enfrentam:
-
-- dificuldade em controlar gastos;
-- alto nível de endividamento;
-- falta de visibilidade do orçamento;
-- baixa educação financeira.
-
-O TLT Finanças surge como uma solução simples e acessível para esse cenário.
-
----
-
-## 💡 Solução
-
-Uma aplicação que centraliza o controle financeiro do usuário, permitindo:
-
-- visualizar saldo e fluxo de caixa;
-- registrar transações facilmente;
-- acompanhar metas financeiras;
-- analisar dados através de gráficos;
-- tomar decisões mais conscientes.
-
----
-
-## 🛠️ Tecnologias
-
-### Frontend
-
-- React Native (Expo)
-- Victory Native
+cp apps/backend/env/.env.example apps/backend/env/.env
+cp apps/mobile/env/.env.example apps/mobile/.env
+# Preencha DATABASE_URL, Supabase keys e EXPO_PUBLIC_API_URL
+```
 
 ### Backend
 
-- Node.js
-- NestJS
-- PostgreSQL
-- Prisma
-
-### Outros
-
-- Supabase Auth
-- Jest
-- Swagger
-- GitHub
-
----
-
-## ⚙️ Como executar o projeto
-
-### Pré-requisitos
-
-- Node.js (>= 20)
-- npm ou yarn
-- Xcode / Android Studio (para emuladores) — desenvolvimento do app Expo
-
-### 🔧 Instalação
-
 ```bash
-# Clone o repositório
-git clone https://github.com/mdsreq-fga-unb/REQ-2026.1-T02-TLF.git
-
-# Acesse o projeto (o nome da pasta segue o repositório)
-cd REQ-2026.1-T02-TLF
+cd apps/backend
+docker compose up -d
+npm run db:generate
+npm run db:migrate
+npm run dev
 ```
 
-### ▶️ Rodando o frontend (mobile)
+API: `http://localhost:3000/api/v1`  
+Swagger: `http://localhost:3000/api/v1/docs`
+
+### Mobile
+
+O app usa módulos nativos (WatermelonDB), então Expo Go não funciona. Use Dev Client / EAS:
 
 ```bash
 cd apps/mobile
-npm start
+npx expo run:android
+# ou
+eas build --profile development --platform android
+npm run dev
 ```
 
-### ▶️ Rodando o backend
+## Arquitetura
 
-```bash
-🚧 Em desenvolvimento
-```
+### Backend
 
----
+`DTO → Controller → Service → Prisma → PostgreSQL`
 
-## 📅 Cronograma
+Auth via Supabase. Dados de domínio sincronizam pelo módulo `/sync` (pull/push).
 
-O projeto foi dividido em **13 iterações**:
+### Mobile
 
-- 🧱 Concepção e planejamento
-- ⚙️ Desenvolvimento das funcionalidades principais
-- 📱 Interface mobile
-- 🔐 Segurança e dados
-- 🧪 Testes e validação
-- 🚀 Entrega do MVP
+`Screen (TSX) → Hook → Service (WatermelonDB / API) → Sync → Backend`
 
----
+Zustand só para estado global (auth, tema). Leituras/escritas de domínio vão para o banco local e sobem via sync.
 
-## 👥 Equipe
+## Convenções
 
-| Nome              | Função                      |
-| ----------------- | --------------------------- |
-| Gabriel Mota      | Gerente de Projeto / DevOps |
-| Lucas Fujimoto    | Frontend                    |
-| Guilherme Ventura | Frontend                    |
-| Danilo de Melo    | Backend                     |
-| Daniel Lira       | Backend / Requisitos        |
-| Tiago Lyra        | Backend                     |
+- Valores monetários em centavos (`int`)
+- IDs em UUID
+- Código em inglês; textos de UI em português
+- Rotas públicas: `/auth/register`, `/auth/login`, `/auth/refresh`
 
----
+## Contribuição
 
-## 📌 Status do projeto
+Veja [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md).
 
-🚧 Em desenvolvimento — MVP em construção
+## Licença
 
----
-
-## 📄 Licença
-
-Este projeto está licenciado sob a **MIT License**.
-
----
-
-## 🌐 Deploy
-
-A aplicação pode ser publicada via **GitHub Pages** para a landing page.
-
----
-
-## 🤝 Contribuição
-
-Centralizamos o guia de contribuição em `.github/CONTRIBUTING.md`, incluindo:
-
-- setup completo do ambiente de desenvolvimento;
-- fluxo de branches e padrão de commits;
-- comandos do dia a dia;
-- convenções técnicas do projeto.
-- arquitetura e fluxos de produto (offline-first, onboarding e autenticação);
-- build mobile com EAS e referência de variáveis de ambiente.
-
-Para contribuir, leia: `.github/CONTRIBUTING.md`.
+MIT

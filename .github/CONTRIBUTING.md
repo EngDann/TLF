@@ -1,11 +1,9 @@
-# 🤝 Guia de Contribuição
-
-Este documento concentra o conteúdo operacional para colaborar no projeto.
+# Guia de Contribuição
 
 ## Estrutura do monorepo
 
 ```text
-REQ-2026.1-T02-TLF/
+TLF/
 ├── apps/
 │   ├── backend/          # NestJS + Prisma + PostgreSQL
 │   └── mobile/           # React Native + Expo + WatermelonDB
@@ -24,13 +22,13 @@ REQ-2026.1-T02-TLF/
 | Android Studio   | qualquer recente | Emulador Android        |
 | Xcode            | 15+              | Emulador iOS (só Mac)   |
 
-## Setup inicial (primeira vez)
+## Setup inicial
 
 ### 1) Clone e instale dependências
 
 ```bash
-git clone <repo-url>
-cd <pasta-do-repositorio>
+git clone https://github.com/EngDann/TLF.git
+cd TLF
 npm install
 ```
 
@@ -40,9 +38,6 @@ npm install
 cp apps/backend/env/.env.example apps/backend/env/.env
 cp apps/mobile/env/.env.example apps/mobile/.env
 ```
-
-Preencha o `apps/backend/env/.env`:
-Preencha o `apps/mobile/.env`:
 
 Depois gere o Prisma Client:
 
@@ -75,7 +70,7 @@ No dia a dia do mobile:
 cd apps/mobile && npm run dev
 ```
 
-## Arquitetura (visão rápida)
+## Arquitetura
 
 ### Backend
 
@@ -93,6 +88,8 @@ Prisma ORM
 PostgreSQL
 ```
 
+Entidades de domínio offline-first sincronizam via `POST /sync/push` e `GET /sync/pull`. Auth e user permanecem como REST.
+
 ### Mobile
 
 ```text
@@ -100,12 +97,14 @@ Screen (só TSX, usa hooks e components)
     ↓
 Hook (lógica da tela, estado local)
     ↓
-Service (DatabaseService ou ApiService)
+Service (DatabaseService / sync)
     ↓
 WatermelonDB (local) <-> Sync <-> Backend
 ```
 
-O Zustand gerencia apenas estado global. Estado de tela fica nos hooks locais.
+Zustand gerencia apenas estado global. Estado de tela fica nos hooks locais.
+
+Código (arquivos, pastas, identificadores) em inglês. Strings de UI em português.
 
 ## Fluxos do produto
 
@@ -128,21 +127,6 @@ NestJS Backend
 PostgreSQL
 ```
 
-### Primeiro uso (onboarding técnico)
-
-```text
-1. Abre o app pela primeira vez
-2. Tela de registro (email, senha, nome)
-3. Backend cria usuário no Supabase Auth
-   + espelha em users no Postgres
-   + cria categorias padrão
-4. Backend retorna accessToken + refreshToken
-5. Mobile salva tokens no SecureStore
-6. Zustand marca isAuthenticated: true
-7. App redireciona para Home
-8. Sync inicial puxa dados para o WatermelonDB
-```
-
 ### Autenticação
 
 ```text
@@ -155,56 +139,34 @@ Login
 Requests autenticados
   Axios interceptor injeta bearer token a cada requisição
 
-Token expirado (após X horas)
+Token expirado
   Request retorna 401
   Axios interceptor chama POST /auth/refresh
   Backend -> Supabase emite novo accessToken
   Axios retenta o request original
-
-Logout
-  Mobile remove tokens do SecureStore
-  Backend invalida sessão no Supabase
-  App redireciona para login
 ```
 
 ## Build do app mobile (EAS)
 
-O app usa EAS Build para gerar binários. Como usa código nativo (WatermelonDB), o Expo Go não atende este projeto.
+Como o app usa código nativo (WatermelonDB), o Expo Go não atende.
 
 ```bash
 cd apps/mobile
-
-# Instalação inicial
 npm install -g eas-cli
 eas login
 
-# Dev Client
 eas build --profile development --platform android
-eas build --profile development --platform ios
-
-# Preview
 eas build --profile preview --platform android
-
-# Produção
 eas build --profile production --platform all
 ```
 
-Após instalar o build de desenvolvimento no dispositivo/emulador:
+Após instalar o build de desenvolvimento:
 
 ```bash
 npx expo start --dev-client
 ```
 
 ## Fluxo de branches
-
-### 1) Sincronize com `develop`
-
-```bash
-git checkout develop
-git pull origin develop
-```
-
-### 2) Crie sua branch de trabalho
 
 Padrão: `tipo/numero-da-issue-descricao-curta`
 
@@ -214,31 +176,13 @@ Exemplos:
 - `fix/55-bug-no-botao-sair`
 - `docs/12-atualizar-readme`
 
-```bash
-git checkout -b feat/42-tela-de-login
-```
-
 ## Padrão de commits
-
-Formato:
 
 ```text
 <tipo>(<escopo>): <assunto>
-
-issue associada: #<numero-da-issue>
 ```
 
-Referência: [Padrões de Commits do iuricode](https://github.com/iuricode/padroes-de-commits)
-
-Tipos mais comuns:
-
-- `feat`: nova funcionalidade.
-- `fix`: correção de bug.
-- `docs`: documentação.
-- `style`: formatação sem mudança de lógica.
-- `refactor`: refatoração sem feature nova nem bug fix.
-- `test`: inclusão/ajuste de testes.
-- `chore`: manutenção de tooling/dependências.
+Tipos comuns: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`.
 
 ## Comandos do dia a dia
 
@@ -250,7 +194,7 @@ npm run dev
 cd apps/backend && npm run dev
 
 # Mobile
-cd apps/mobile && npx run dev
+cd apps/mobile && npm run dev
 
 # Prisma
 cd apps/backend && npm run db:generate
@@ -276,4 +220,3 @@ npm run test
 - `npm run lint` sem erros.
 - `npm run test` passando.
 - Commits seguem o padrão definido.
-- Branch criada a partir da `develop`.
