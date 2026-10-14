@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { router } from 'expo-router'
 import type { InstitutionListItem } from '@/components/finance/institutions/types'
-import { deleteInstitution, listInstitutions } from '@/services/api/institutions'
 import { institutionQueries } from '@/services/database/queries/institution'
 import { useInstitutionsStore } from '@/stores/institutions'
-import {
-  mapApiInstitutionToListItem,
-  mapLocalInstitutionToListItem,
-} from '@/utils/institutions/institutionMappers'
-
-const USE_MOCK_INSTITUTIONS = true
+import { mapLocalInstitutionToListItem } from '@/utils/institutions/institutionMappers'
 
 export function useInstitutionsScreen() {
   const institutions = useInstitutionsStore((state) => state.institutions)
   const setInstitutions = useInstitutionsStore((state) => state.setInstitutions)
   const removeInstitution = useInstitutionsStore((state) => state.removeInstitution)
 
-  const [isLoading, setIsLoading] = useState(USE_MOCK_INSTITUTIONS ? false : true)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -24,33 +18,19 @@ export function useInstitutionsScreen() {
   const [blockedVisible, setBlockedVisible] = useState(false)
 
   useEffect(() => {
-    if (USE_MOCK_INSTITUTIONS) return
     let isActive = true
 
     const loadInstitutions = async () => {
       try {
         setIsLoading(true)
-        const data = await listInstitutions()
-
+        const localData = await institutionQueries.getAll()
         if (!isActive) return
-
-        setInstitutions(data.map(mapApiInstitutionToListItem))
+        setInstitutions(localData.map(mapLocalInstitutionToListItem))
         setError(null)
-      } catch (loadError) {
+      } catch (localError) {
         if (!isActive) return
-
-        try {
-          const localData = await institutionQueries.getAll()
-
-          if (!isActive) return
-
-          setInstitutions(localData.map(mapLocalInstitutionToListItem))
-          setError('Sem conexao. Exibindo dados locais.')
-        } catch (localError) {
-          console.error('Erro ao carregar instituicoes:', loadError)
-          console.error('Erro ao carregar instituicoes locais:', localError)
-          setError('Nao foi possivel carregar as instituicoes.')
-        }
+        console.error('Erro ao carregar instituicoes locais:', localError)
+        setError('Nao foi possivel carregar as instituicoes.')
       } finally {
         if (isActive) setIsLoading(false)
       }
@@ -72,7 +52,7 @@ export function useInstitutionsScreen() {
 
   const handleOpen = useCallback((institution: InstitutionListItem) => {
     router.push({
-      pathname: '/instituicao/[id]',
+      pathname: '/institution/[id]',
       params: {
         id: institution.id,
         name: institution.name,
@@ -83,25 +63,14 @@ export function useInstitutionsScreen() {
   }, [])
 
   const handleCreate = useCallback(() => {
-    router.push('/instituicao/nova')
+    router.push('/institution/new')
   }, [])
 
   const performDelete = useCallback(
     async (institutionId: string) => {
-      if (USE_MOCK_INSTITUTIONS) {
-        removeInstitution(institutionId)
-        return
-      }
-
       try {
-        await deleteInstitution(institutionId)
+        await institutionQueries.delete(institutionId)
         removeInstitution(institutionId)
-        try {
-          await institutionQueries.delete(institutionId)
-        } catch (localError) {
-          // Falha ao remover do banco local nao deve bloquear a exclusao remota
-          console.warn('Falha ao remover instituicao do banco local:', localError)
-        }
         setError(null)
       } catch (deleteError) {
         console.error('Erro ao excluir instituicao:', deleteError)
@@ -111,8 +80,6 @@ export function useInstitutionsScreen() {
     [removeInstitution],
   )
 
-  // Bloqueia a exclusão quando a instituição possui contas vinculadas;
-  // caso contrário, abre o modal de confirmação.
   const handleDelete = useCallback(
     (institutionId: string) => {
       const institution = institutions.find((item) => item.id === institutionId)

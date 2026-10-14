@@ -32,6 +32,10 @@ const applyAccountFields = (account: Account, input: AccountInput | AccountUpdat
   if (input.isActive !== undefined) account.isActive = input.isActive
 }
 
+export const getAllAccounts = async () => {
+  return accountsCollection().query().fetch()
+}
+
 export const getAccountById = async (id: string) => accountsCollection().find(id)
 
 export const createAccount = async (input: AccountInput) => {
@@ -80,6 +84,7 @@ export const markAccountAsDeleted = async (id: string) => {
 
 export const accountQueries = {
   table: ACCOUNTS_TABLE,
+  getAll: getAllAccounts,
   getById: getAccountById,
   create: createAccount,
   update: updateAccount,

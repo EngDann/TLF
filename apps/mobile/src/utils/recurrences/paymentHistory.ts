@@ -1,4 +1,4 @@
-import type { PaymentHistoryEntry } from '@/utils/fixtures/recurrences'
+import type { PaymentHistoryEntry } from '@/components/finance/recurrences/types'
 import { MONTHS_FULL } from './dates'
 import type { IconKey } from '@/utils/icons'
 import type { SemanticColors } from '@/utils/colors'

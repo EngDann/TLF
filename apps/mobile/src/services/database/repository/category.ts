@@ -20,6 +20,10 @@ const applyCategoryFields = (category: Category, input: CategoryInput | Category
   if (input.color !== undefined) category.color = input.color
 }
 
+export const getAllCategories = async () => {
+  return categoriesCollection().query().fetch()
+}
+
 export const getCategoryById = async (id: string) => categoriesCollection().find(id)
 
 export const createCategory = async (input: CategoryInput) => {
@@ -57,6 +61,7 @@ export const markCategoryAsDeleted = async (id: string) => {
 
 export const categoryQueries = {
   table: CATEGORIES_TABLE,
+  getAll: getAllCategories,
   getById: getCategoryById,
   create: createCategory,
   update: updateCategory,

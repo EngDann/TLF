@@ -1,19 +1,18 @@
-import { categoryDistribution } from '@/utils/fixtures/records'
-
-export const CATEGORY_COLOR_PALETTE = categoryDistribution.map((category) => category.color)
-
-export const CATEGORY_COLOR_MAP = new Map(
-  categoryDistribution.map((category) => [category.name, category.color]),
-)
+export const CATEGORY_COLOR_PALETTE = [
+  '#6A66FF',
+  '#2CB67D',
+  '#F25F5C',
+  '#3A86FF',
+  '#FFB703',
+  '#8E88FF',
+  '#4ECDC4',
+  '#FF6B6B',
+]
 
 export const FALLBACK_CATEGORY_COLOR = CATEGORY_COLOR_PALETTE[0] ?? '#6A66FF'
 
 export const PALETTE_SIZE = CATEGORY_COLOR_PALETTE.length || 1
 
-export function resolveCategoryColor(name: string, index: number): string {
-  return (
-    CATEGORY_COLOR_MAP.get(name) ??
-    CATEGORY_COLOR_PALETTE[index % PALETTE_SIZE] ??
-    FALLBACK_CATEGORY_COLOR
-  )
+export function resolveCategoryColor(_name: string, index: number): string {
+  return CATEGORY_COLOR_PALETTE[index % PALETTE_SIZE] ?? FALLBACK_CATEGORY_COLOR
 }

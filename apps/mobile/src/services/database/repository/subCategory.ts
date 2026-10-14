@@ -1,3 +1,4 @@
+import { Q } from '@nozbe/watermelondb'
 import { database } from '..'
 import { SubCategory } from '../models/subCategory'
 
@@ -22,6 +23,14 @@ const applySubCategoryFields = (
   if (input.name !== undefined) subCategory.name = input.name
   if (input.icon !== undefined) subCategory.icon = input.icon
   if (input.color !== undefined) subCategory.color = input.color
+}
+
+export const getAllSubCategories = async () => {
+  return subCategoriesCollection().query().fetch()
+}
+
+export const getSubCategoriesByCategoryId = async (categoryId: string) => {
+  return subCategoriesCollection().query(Q.where('category_id', categoryId)).fetch()
 }
 
 export const getSubCategoryById = async (id: string) => subCategoriesCollection().find(id)
@@ -52,6 +61,8 @@ export const markSubCategoryAsDeleted = async (id: string) => {
 
 export const subCategoryQueries = {
   table: SUB_CATEGORIES_TABLE,
+  getAll: getAllSubCategories,
+  getByCategoryId: getSubCategoriesByCategoryId,
   getById: getSubCategoryById,
   create: createSubCategory,
   update: updateSubCategory,

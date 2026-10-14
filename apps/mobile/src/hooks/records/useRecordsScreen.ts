@@ -1,20 +1,9 @@
-import {
-  mockTransactions,
-  transactionCategoryOptions,
-  transactionTypeOptions,
-} from '@/components/finance/records/records-data'
 import type {
   CategoryData,
   SummaryData,
   TransactionListItem,
 } from '@/components/finance/records/types'
 import type { ThemedOverlayAlertAction } from '@/components/ui/ThemedOverlayAlert'
-import {
-  deleteTransaction,
-  listTransactions,
-  listTransactionsByCategory,
-  listTransactionsByType,
-} from '@/services/api/transactions'
 import { transactionQueries } from '@/services/database/repository/transaction'
 import { TransactionType } from '@/services/database/models/transaction'
 import {
@@ -23,14 +12,11 @@ import {
   buildSummaryData,
   filterTransactions,
 } from '@/utils/records/recordsCalculations'
-import {
-  mapApiTransactionToListItem,
-  mapLocalTransactionToListItem,
-} from '@/utils/records/transactionMappers'
+import { mapLocalTransactionToListItem } from '@/utils/records/transactionMappers'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-const USE_MOCK_TRANSACTIONS = true
+const TRANSACTION_TYPE_OPTIONS: TransactionType[] = ['EXPENSE', 'INCOME', 'TRANSFER']
 
 export type RecordsScreenAlert = {
   title?: string
@@ -48,48 +34,24 @@ export function useRecordsScreen() {
   const [alert, setAlert] = useState<RecordsScreenAlert | null>(null)
 
   useEffect(() => {
-    if (!USE_MOCK_TRANSACTIONS) return
-    setTransactions(mockTransactions)
-    setIsLoading(false)
-    setError(null)
-  }, [])
-
-  useEffect(() => {
-    if (USE_MOCK_TRANSACTIONS) return
     let isActive = true
 
     const loadTransactions = async () => {
       try {
         setIsLoading(true)
-        let data
-
-        if (categoryFilter !== 'Todas') {
-          data = await listTransactionsByCategory(categoryFilter)
-        } else if (typeFilter !== 'ALL') {
-          data = await listTransactionsByType(typeFilter)
-        } else {
-          data = await listTransactions()
-        }
+        const filters = typeFilter !== 'ALL' ? { type: typeFilter } : undefined
+        const localData = filters
+          ? await transactionQueries.getByFilters(filters)
+          : await transactionQueries.getAll()
 
         if (!isActive) return
 
-        setTransactions(data.map(mapApiTransactionToListItem))
+        setTransactions(localData.map(mapLocalTransactionToListItem))
         setError(null)
-      } catch (loadError) {
+      } catch (localError) {
         if (!isActive) return
-
-        try {
-          const localData = await transactionQueries.getAll()
-
-          if (!isActive) return
-
-          setTransactions(localData.map(mapLocalTransactionToListItem))
-          setError('Sem conexao. Exibindo dados locais.')
-        } catch (localError) {
-          console.error('Erro ao carregar transacoes:', loadError)
-          console.error('Erro ao carregar transacoes locais:', localError)
-          setError('Nao foi possivel carregar as transacoes.')
-        }
+        console.error('Erro ao carregar transacoes locais:', localError)
+        setError('Nao foi possivel carregar as transacoes.')
       } finally {
         if (isActive) setIsLoading(false)
       }
@@ -100,7 +62,7 @@ export function useRecordsScreen() {
     return () => {
       isActive = false
     }
-  }, [categoryFilter, typeFilter])
+  }, [typeFilter])
 
   const dismissAlert = useCallback(() => setAlert(null), [])
 
@@ -121,25 +83,9 @@ export function useRecordsScreen() {
     async (transactionId: string) => {
       setAlert(null)
 
-      if (USE_MOCK_TRANSACTIONS) {
-        setTransactions((prev) => prev.filter((item) => item.id !== transactionId))
-        setError(null)
-        setAlert({
-          title: 'Transacao excluida',
-          message: 'A transacao foi removida com sucesso.',
-          actions: [{ label: 'Entendi', onPress: dismissAlert }],
-        })
-        return
-      }
-
       try {
-        await deleteTransaction(transactionId)
+        await transactionQueries.delete(transactionId)
         setTransactions((prev) => prev.filter((item) => item.id !== transactionId))
-        try {
-          await transactionQueries.delete(transactionId)
-        } catch {
-          // Local delete is best-effort to keep offline cache in sync.
-        }
         setError(null)
         setAlert({
           title: 'Transacao excluida',
@@ -178,10 +124,7 @@ export function useRecordsScreen() {
     [dismissAlert, performDelete],
   )
 
-  const categoryOptions = useMemo(
-    () => buildCategoryOptions(transactions, transactionCategoryOptions),
-    [transactions],
-  )
+  const categoryOptions = useMemo(() => buildCategoryOptions(transactions, []), [transactions])
 
   const filteredTransactions = useMemo(
     () =>
@@ -211,7 +154,7 @@ export function useRecordsScreen() {
     typeFilter,
     setTypeFilter,
     categoryOptions,
-    transactionTypeOptions,
+    transactionTypeOptions: TRANSACTION_TYPE_OPTIONS,
     filteredTransactions,
     summaryData,
     categoryData,

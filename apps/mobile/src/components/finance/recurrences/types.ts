@@ -16,3 +16,29 @@ export type Recurrence = {
   duration: RecurrenceDuration
   isActive: boolean
 }
+
+export type PaymentHistoryEntry = {
+  month: number
+  year: number
+  status: 'CONFIRMED' | 'SKIPPED' | 'PENDING'
+  date?: string
+  amount?: number
+}
+
+export type RecurrenceAccountOption = {
+  id: string
+  name: string
+}
+
+export type RecurrenceCategoryOption = {
+  id: string
+  name: string
+  icon: string
+  color: string
+}
+
+export type RecurrenceSubcategoryOption = {
+  id: string
+  categoryId: string
+  name: string
+}

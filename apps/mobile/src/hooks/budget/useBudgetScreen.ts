@@ -1,10 +1,7 @@
-// TODO: Remover quando sistema de categorias for implementado
-/* eslint-disable no-console */
 import { useCallback, useState } from 'react'
-import { BudgetService } from '@/services/api/budget'
+import { budgetQueries } from '@/services/database/repository/budget'
 import { BudgetData, BudgetListItem, BudgetType } from 'types/types'
 import { formatCurrency } from '@/utils/formatters'
-import { getApiErrorMessage } from '@/utils/apiErrorMessage'
 
 const MAX_CENTS = 9_999_999
 
@@ -15,6 +12,26 @@ export type BudgetInitialValues = {
   categoryId?: string
   month: number
   year: number
+}
+
+function mapBudgetToListItem(budget: {
+  id: string
+  name: string
+  categoryId: string
+  amountLimit: number
+  month: number
+  year: number
+}): BudgetListItem {
+  return {
+    id: budget.id,
+    name: budget.name,
+    categoryId: budget.categoryId,
+    amountLimit: budget.amountLimit,
+    month: budget.month,
+    year: budget.year,
+    totalValue: budget.amountLimit / 100,
+    spentValue: 0,
+  }
 }
 
 export function useBudgetScreen(initialValues?: BudgetInitialValues) {
@@ -36,9 +53,8 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
 
   async function fetchBudgets() {
     try {
-      const response = await BudgetService.getAll()
-
-      setBudgets(response.data)
+      const data = await budgetQueries.getAll()
+      setBudgets(data.map(mapBudgetToListItem))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred'
       setFeedbackMessage(errorMessage)
@@ -47,22 +63,22 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
 
   async function onRefresh() {
     setRefreshing(true)
-
     await fetchBudgets()
-
     setRefreshing(false)
   }
 
   async function fetchBudget(id: string) {
-    const response = await BudgetService.getById(id)
-
-    const budget = response.data
-
+    const budget = await budgetQueries.getById(id)
     setName(budget.name)
     setAmountLimit(budget.amountLimit)
     setMonth(budget.month - 1)
     setYear(budget.year)
     setCategoryId(budget.categoryId)
+  }
+
+  async function deleteBudget(id: string) {
+    await budgetQueries.delete(id)
+    setBudgets((prev) => prev.filter((item) => item.id !== id))
   }
 
   const handleKeypad = useCallback((key: string) => {
@@ -84,12 +100,8 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
 
   const errors = {
     amount: amountLimit === 0 ? 'Informe o valor da transação' : undefined,
-    // TODO: Reativar quando a logica de categorias for implementada
-    // category: categoryId === '' ? 'Selecione uma categoria' : undefined,
   }
 
-  // TODO: Reativar quando a logica de categorias for implementada
-  // const isValid = !errors.amount && !errors.category
   const isValid = !errors.amount
 
   const reset = () => {
@@ -109,21 +121,25 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
     setSubmitting(true)
     try {
       const payload: BudgetData = {
-        name: name,
-        amountLimit: amountLimit,
+        name,
+        amountLimit,
         month: month + 1,
-        year: year,
+        year,
+        categoryId: categoryId || undefined,
       }
 
-      console.log('[BudgetCreateSubmit] payload:', payload)
-      await BudgetService.create(payload)
+      await budgetQueries.create({
+        name: payload.name,
+        amountLimit: payload.amountLimit,
+        month: payload.month,
+        year: payload.year,
+        categoryId: payload.categoryId ?? '',
+      })
       reset()
       onSuccess?.()
     } catch (error) {
       console.error('[BudgetCreateSubmit]', error)
-      setFeedbackMessage(
-        getApiErrorMessage(error, 'Não foi possível salvar a transação. Tente novamente.'),
-      )
+      setFeedbackMessage('Não foi possível salvar o orçamento. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -135,21 +151,17 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
     setFeedbackMessage(null)
     setSubmitting(true)
     try {
-      const payload: BudgetData = {
-        name: name,
-        amountLimit: amountLimit,
-        month: month,
-        year: year,
-      }
-
-      console.log('[BudgetEditSubmit] payload:', payload)
-      await BudgetService.update(id, payload)
+      await budgetQueries.update(id, {
+        name,
+        amountLimit,
+        month: month + 1,
+        year,
+        categoryId: categoryId || undefined,
+      })
       onSuccess?.()
     } catch (error) {
       console.error('[BudgetEditSubmit]', error)
-      setFeedbackMessage(
-        getApiErrorMessage(error, 'Não foi possível salvar a transação. Tente novamente.'),
-      )
+      setFeedbackMessage('Não foi possível salvar o orçamento. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -184,6 +196,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
     setBudgets,
     fetchBudgets,
     fetchBudget,
+    deleteBudget,
     refreshing,
     setRefreshing,
     onRefresh,

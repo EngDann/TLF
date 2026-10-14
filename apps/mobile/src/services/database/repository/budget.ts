@@ -6,7 +6,7 @@ const BUDGETS_TABLE = 'budgets'
 const budgetsCollection = () => database.get<Budget>(BUDGETS_TABLE)
 
 export type BudgetInput = {
-  categoryId: string
+  categoryId?: string | null
   name: string
   amountLimit: number
   month: number
@@ -21,6 +21,10 @@ const applyBudgetFields = (budget: Budget, input: BudgetInput | BudgetUpdateInpu
   if (input.amountLimit !== undefined) budget.amountLimit = input.amountLimit
   if (input.month !== undefined) budget.month = input.month
   if (input.year !== undefined) budget.year = input.year
+}
+
+export const getAllBudgets = async () => {
+  return budgetsCollection().query().fetch()
 }
 
 export const getBudgetById = async (id: string) => budgetsCollection().find(id)
@@ -51,6 +55,7 @@ export const markBudgetAsDeleted = async (id: string) => {
 
 export const budgetQueries = {
   table: BUDGETS_TABLE,
+  getAll: getAllBudgets,
   getById: getBudgetById,
   create: createBudget,
   update: updateBudget,

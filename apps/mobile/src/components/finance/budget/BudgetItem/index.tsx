@@ -1,6 +1,3 @@
-// TODO: Remover quando sistema de categorias for implementado
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { ThemedContainer } from '@/components/ui/ThemedContainer'
 import { ThemedText } from '@/components/ui/ThemedText'
 import { Pressable, View } from 'react-native'
@@ -13,9 +10,8 @@ import { useThemeColor } from '@/hooks/useThemeColor'
 import { ProgressBar } from '../ProgressBar'
 import { formatCurrency } from '@/utils/formatters'
 import { useState } from 'react'
-import { BudgetService } from '@/services/api/budget'
 import { ThemedOverlayAlert } from '@/components/ui/ThemedOverlayAlert'
-import { useBudgetScreen } from '@/hooks/budget/useBudgetScreen'
+import { budgetQueries } from '@/services/database/repository/budget'
 
 type props = {
   id: string
@@ -31,11 +27,8 @@ type props = {
 
 export function BudgetItem({
   id,
-  categoryId,
   amountLimit,
   name,
-  month,
-  year,
   totalValue = amountLimit / 100,
   spentValue = 0,
   onDelete,
@@ -48,7 +41,7 @@ export function BudgetItem({
   const formatedRemainingValue = formatCurrency(remainingValue)
   const safePercentage = Math.min(100, fillPercentage)
   const [showAction, setShowAction] = useState(false)
-  const useBudget = useBudgetScreen()
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
 
   return (
     <ThemedContainer style={{ padding: 20 }}>
@@ -68,7 +61,7 @@ export function BudgetItem({
               <Pressable
                 onPress={() => {
                   router.push(`/(budget)/${id}`)
-                  setShowAction(false) // Fecha o menu após a ação
+                  setShowAction(false)
                 }}
                 style={styles.menuItem}
               >
@@ -78,9 +71,7 @@ export function BudgetItem({
               <SectionDivider />
 
               <Pressable
-                onPress={() =>
-                  useBudget.setFeedbackMessage('Você tem certeza que deseja excluir esse item?')
-                }
+                onPress={() => setFeedbackMessage('Você tem certeza que deseja excluir esse item?')}
                 style={styles.menuItem}
               >
                 <ThemedText text="Excluir" />
@@ -106,23 +97,21 @@ export function BudgetItem({
         />
       </View>
       <ThemedOverlayAlert
-        visible={useBudget.feedbackMessage != null}
-        onRequestClose={useBudget.dismissFeedback}
-        message={useBudget.feedbackMessage ?? ''}
+        visible={feedbackMessage != null}
+        onRequestClose={() => setFeedbackMessage(null)}
+        message={feedbackMessage ?? ''}
         actions={[
-          { label: 'Cancelar', onPress: useBudget.dismissFeedback },
+          { label: 'Cancelar', onPress: () => setFeedbackMessage(null) },
           {
             label: 'Confirmar',
             onPress: async () => {
               try {
-                await BudgetService.delete(id)
-                useBudget.dismissFeedback()
+                await budgetQueries.delete(id)
+                setFeedbackMessage(null)
                 onDelete?.(id)
               } catch (deleteError) {
                 console.error('Erro ao excluir orçamento:', deleteError)
-                useBudget.setFeedbackMessage(
-                  'Não foi possível excluir o orçamento. Tente novamente.',
-                )
+                setFeedbackMessage('Não foi possível excluir o orçamento. Tente novamente.')
               }
             },
           },
