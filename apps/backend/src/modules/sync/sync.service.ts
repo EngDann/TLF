@@ -7,7 +7,7 @@ import { CategoriesService } from '../categories/categories.service'
 import { InstitutionsService } from '../institutions/institutions.service'
 import { InvoiceService } from '../invoices/invoice.service'
 import { NotificationsService } from '../notifications/notifications.service'
-import { RecurrencesService } from '../recurrences/recurrences.service'
+import { RecurrenceService } from '../recurrence/recurrence.service'
 import { SubCategoriesService } from '../sub-categories/sub-categories.service'
 import { TransactionsService } from '../transactions/transactions.service'
 import { PullRequestDto, PullResponseDto } from './dto/pull'
@@ -30,7 +30,7 @@ export class SyncService {
     private readonly budgetService: BudgetService,
     private readonly accountsService: AccountsService,
     private readonly invoiceService: InvoiceService,
-    private readonly recurrencesService: RecurrencesService,
+    private readonly recurrenceService: RecurrenceService,
     private readonly transactionsService: TransactionsService,
     private readonly notificationsService: NotificationsService,
   ) {}
@@ -61,7 +61,7 @@ export class SyncService {
       this.budgetService.findMany(syncFilter),
       this.accountsService.findMany(syncFilter),
       this.invoiceService.findMany(syncFilter),
-      this.recurrencesService.findMany(syncFilter),
+      this.recurrenceService.findMany(syncFilter),
       this.transactionsService.findMany(syncFilter),
       this.notificationsService.findMany(syncFilter),
       this.prisma.deletedRecord.findMany({
@@ -168,9 +168,9 @@ export class SyncService {
         })
 
         await this.applyTableChanges(userId, changes.recurrences, {
-          create: (record) => this.recurrencesService.syncCreate(userId, record),
-          update: (record) => this.recurrencesService.syncUpdate(userId, record),
-          remove: (id) => this.recurrencesService.remove({ userId, id }),
+          create: (record) => this.recurrenceService.syncCreate(userId, record),
+          update: (record) => this.recurrenceService.syncUpdate(userId, record),
+          remove: (id) => this.recurrenceService.removeForSync({ userId, id }),
         })
 
         await this.applyTableChanges(userId, changes.transactions, {

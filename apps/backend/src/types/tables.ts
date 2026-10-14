@@ -4,7 +4,7 @@ import { SyncCategoryDto } from '@modules/categories/dto/sync-category.dto'
 import { SyncInstitutionDto } from '@modules/institutions/dto/sync-institution.dto'
 import { SyncInvoiceDto } from '@modules/invoices/dto/sync-invoice.dto'
 import { SyncNotificationDto } from '@modules/notifications/dto/sync-notification.dto'
-import { SyncRecurrenceDto } from '@modules/recurrences/dto/sync-recurrence.dto'
+import { SyncRecurrenceDto } from '@modules/recurrence/dto/sync-recurrence.dto'
 import { SyncSubCategoryDto } from '@modules/sub-categories/dto/sync-sub-category.dto'
 import { SyncTransactionDto } from '@modules/transactions/dto/sync-transaction.dto'
 

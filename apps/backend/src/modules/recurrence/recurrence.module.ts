@@ -6,5 +6,6 @@ import { RecurrenceScheduler } from './recurrence.scheduler'
 @Module({
   controllers: [RecurrenceController],
   providers: [RecurrenceService, RecurrenceScheduler],
+  exports: [RecurrenceService],
 })
 export class RecurrenceModule {}

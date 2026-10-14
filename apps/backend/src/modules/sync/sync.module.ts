@@ -5,7 +5,7 @@ import { CategoriesModule } from '../categories/categories.module'
 import { InstitutionsModule } from '../institutions/institutions.module'
 import { InvoicesModule } from '../invoices/invoices.module'
 import { NotificationsModule } from '../notifications/notification.module'
-import { RecurrencesModule } from '../recurrences/recurrences.module'
+import { RecurrenceModule } from '../recurrence/recurrence.module'
 import { SubCategoriesModule } from '../sub-categories/sub-categories.module'
 import { TransactionsModule } from '../transactions/transactions.module'
 import { SyncController } from './sync.controller'
@@ -19,7 +19,7 @@ import { SyncService } from './sync.service'
     BudgetModule,
     AccountsModule,
     InvoicesModule,
-    RecurrencesModule,
+    RecurrenceModule,
     TransactionsModule,
     NotificationsModule,
   ],

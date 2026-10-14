@@ -1,7 +1,7 @@
 import { IsBoolean, IsOptional, IsUUID } from 'class-validator'
 import { SyncFindManyBaseDto } from '@common/sync/dto/sync-find-many-base.dto'
 
-export class FindManyRecurrencesDto extends SyncFindManyBaseDto {
+export class FindManyRecurrencesSyncDto extends SyncFindManyBaseDto {
   @IsOptional()
   @IsUUID()
   id?: string
