@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
-    "postinstall": "npx install-skia",
     "dev": "expo start --dev-client",
     "start": "expo start",
     "android": "expo run:android",
