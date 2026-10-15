@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '@common/prisma/prisma.service'
 import { GetUserRequestDto, GetUserResponseDto } from './dto/get.dto'
 import { DeleteUserRequestDto, DeleteUserResponseDto } from './dto/delete.dto'
@@ -7,6 +7,8 @@ import { SupabaseService } from '@modules/supabase/supabase.service'
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name)
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly supabase: SupabaseService,
@@ -39,7 +41,7 @@ export class UserService {
 
     const { error } = await this.supabase.auth.admin.deleteUser(dto.userId)
     if (error) {
-      console.error(error.message)
+      this.logger.error(error.message)
       throw new BadRequestException('Falha ao remover usuário do provedor de autenticação')
     }
 
@@ -60,7 +62,7 @@ export class UserService {
       })
 
       if (error) {
-        console.error(error.message)
+        this.logger.error(error.message)
         throw new BadRequestException('Falha ao atualizar credenciais no provedor de autenticação')
       }
     }

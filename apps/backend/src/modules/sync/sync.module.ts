@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common'
+import { AuthModule } from '../auth/auth.module'
 import { AccountsModule } from '../accounts/accounts.module'
 import { BudgetModule } from '../budget/budget.module'
 import { CategoriesModule } from '../categories/categories.module'
@@ -13,6 +14,7 @@ import { SyncService } from './sync.service'
 
 @Module({
   imports: [
+    AuthModule,
     CategoriesModule,
     SubCategoriesModule,
     InstitutionsModule,

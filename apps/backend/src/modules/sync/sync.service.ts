@@ -1,5 +1,5 @@
 import { PrismaService } from '@common/prisma/prisma.service'
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { TableName } from 'generated/prisma/client'
 import { AccountsService } from '../accounts/accounts.service'
 import { BudgetService } from '../budget/budget.service'
@@ -22,6 +22,8 @@ type TableChanges<T> = {
 
 @Injectable()
 export class SyncService {
+  private readonly logger = new Logger(SyncService.name)
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly categoriesService: CategoriesService,
@@ -188,7 +190,7 @@ export class SyncService {
 
       return { success: true }
     } catch (error) {
-      console.error('Error pushing changes:', error)
+      this.logger.error('Error pushing changes', error)
       throw new BadRequestException(`Error pushing changes: ${(error as Error).message}`)
     }
   }

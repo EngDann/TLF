@@ -8,7 +8,6 @@ const envSchema = z.object({
   SUPABASE_URL: z.url(),
   SUPABASE_ANON_KEY: z.string().min(10),
   SUPABASE_SERVICE_KEY: z.string().min(10),
-  SUPABASE_JWT_SECRET: z.string().min(10),
   HTTP_BODY_LIMIT: z.string(),
 })
 
@@ -21,7 +20,6 @@ export const appConfig = registerAs('app', () => ({
   supabaseUrl: process.env.SUPABASE_URL,
   supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY,
-  supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET,
   httpBodyLimit: process.env.HTTP_BODY_LIMIT,
 }))
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import { SupabaseService } from '../supabase/supabase.service'
 import { PrismaService } from '@common/prisma/prisma.service'
 import { RegisterRequestDto, RegisterServiceResponseDto } from './dto/register.dto'
@@ -9,6 +9,8 @@ import { RefreshRequestDto, RefreshResponseDto } from './dto/refresh.dto'
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name)
+
   constructor(
     private supabase: SupabaseService,
     private prisma: PrismaService,
@@ -25,7 +27,7 @@ export class AuthService {
     })
 
     if (error) {
-      console.error(error.message) //TODO:improve logging
+      this.logger.error(error.message)
       throw new BadRequestException(error.message)
     }
 
@@ -44,7 +46,7 @@ export class AuthService {
       return { userId: user.id }
     } catch (error) {
       await this.supabase.auth.admin.deleteUser(data.user.id)
-      console.error((error as Error).message)
+      this.logger.error((error as Error).message)
       throw new BadRequestException((error as Error).message)
     }
   }
@@ -58,7 +60,7 @@ export class AuthService {
     })
 
     if (error) {
-      console.error(error.message)
+      this.logger.error(error.message)
       throw new UnauthorizedException('Credenciais inválidas')
     }
 
@@ -90,7 +92,7 @@ export class AuthService {
     const { error } = await this.supabase.auth.admin.signOut(accessToken)
 
     if (error) {
-      console.error(error.message)
+      this.logger.error(error.message)
       throw new BadRequestException(error.message)
     }
 
@@ -105,7 +107,7 @@ export class AuthService {
     })
 
     if (error) {
-      console.error(error.message)
+      this.logger.error(error.message)
       throw new UnauthorizedException('Token de refresh inválido')
     }
 

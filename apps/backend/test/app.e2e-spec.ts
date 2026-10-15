@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { INestApplication } from '@nestjs/common'
+import { INestApplication, ValidationPipe } from '@nestjs/common'
 import * as request from 'supertest'
 import { AppModule } from './../src/app.module'
 
-describe('AppController (e2e)', () => {
+describe('Sync API (e2e)', () => {
   let app: INestApplication
 
   beforeEach(async () => {
@@ -12,10 +12,22 @@ describe('AppController (e2e)', () => {
     }).compile()
 
     app = moduleFixture.createNestApplication()
+    app.setGlobalPrefix('api/v1')
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
     await app.init()
   })
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!')
+  afterEach(async () => {
+    await app.close()
+  })
+
+  it('GET /api/v1/sync/pull requires authentication', () => {
+    return request(app.getHttpServer()).get('/api/v1/sync/pull').expect(401)
   })
 })
