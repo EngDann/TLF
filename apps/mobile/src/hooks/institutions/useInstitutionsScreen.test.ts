@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native'
-import { institutionQueries } from '@/services/database/queries/institution'
+import { institutionQueries } from '@/services/database/repository/institution'
 import { useInstitutionsStore } from '@/stores/institutions'
 import { useInstitutionsScreen } from './useInstitutionsScreen'
 
-jest.mock('@/services/database/queries/institution', () => ({
+jest.mock('@/services/database/repository/institution', () => ({
   institutionQueries: {
     getAll: jest.fn(),
     delete: jest.fn(),

@@ -39,7 +39,6 @@ export default function CreateBudgetPage({ initialValues }: Props) {
             variant="title"
           />
         </View>
-        {/* <BudgetTypeTabs value={form.type} onChange={form.handleTypeChange} /> */}
         <ScrollView>
           <AmountDisplay
             amountCents={form.amountLimit}

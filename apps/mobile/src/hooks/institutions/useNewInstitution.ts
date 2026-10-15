@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { router } from 'expo-router'
 import { defaultAppearanceColor } from '@/utils/institutions/appearance'
-import { institutionQueries } from '@/services/database/queries/institution'
+import { institutionQueries } from '@/services/database/repository/institution'
 import { useInstitutionForm } from '@/hooks/institutions/useInstitutionForm'
 import { useInstitutionsStore } from '@/stores/institutions'
 import type { IconKey } from '@/utils/icons'

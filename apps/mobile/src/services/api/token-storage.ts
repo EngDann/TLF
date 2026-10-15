@@ -32,11 +32,3 @@ export async function getStoredTokens(): Promise<StoredTokens> {
 
   return { accessToken, refreshToken }
 }
-
-export async function debugStoredTokens(): Promise<StoredTokens> {
-  const tokens = await getStoredTokens()
-  // TODO: Remover quando sistema de categorias for implementado
-  // eslint-disable-next-line no-console
-  console.log('[debugStoredTokens]', tokens)
-  return tokens
-}

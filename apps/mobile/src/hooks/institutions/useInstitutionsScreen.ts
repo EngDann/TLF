@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { router } from 'expo-router'
 import type { InstitutionListItem } from '@/components/finance/institutions/types'
-import { institutionQueries } from '@/services/database/queries/institution'
+import { institutionQueries } from '@/services/database/repository/institution'
 import { useInstitutionsStore } from '@/stores/institutions'
 import { mapLocalInstitutionToListItem } from '@/utils/institutions/institutionMappers'
 
