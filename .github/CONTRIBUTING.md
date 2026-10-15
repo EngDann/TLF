@@ -90,6 +90,20 @@ PostgreSQL
 
 Entidades de domínio offline-first sincronizam via `POST /sync/push` e `GET /sync/pull`. Auth e user permanecem como REST.
 
+### Padrão sync-only (finance domain)
+
+| Superfície HTTP            | Uso                                                                                                |
+| -------------------------- | -------------------------------------------------------------------------------------------------- |
+| `/auth/*`                  | Registro, login, logout, refresh (mobile hoje)                                                     |
+| `/user`                    | Perfil do usuário autenticado                                                                      |
+| `/sync/pull`, `/sync/push` | Única via HTTP para dados financeiros (budget, transações, recorrências, categorias, contas, etc.) |
+
+Regras:
+
+- Nenhum módulo de domínio financeiro expõe CRUD REST “esquecido” além do sync.
+- Jobs de servidor (ex.: gerar transações a partir de recorrências) rodam em schedulers, não como endpoints HTTP.
+- Se no futuro existir web ou ferramentas admin, novos endpoints REST devem ser adicionados de propósito, reutilizando os services de domínio — não reativar controllers mortos ao lado do sync.
+
 ### Mobile
 
 ```text
