@@ -118,6 +118,12 @@ WatermelonDB (local) <-> Sync <-> Backend
 
 Zustand gerencia apenas estado global. Estado de tela fica nos hooks locais.
 
+**WatermelonDB reativo:** telas usam hooks para ações e estado de UI; listas/itens que devem
+atualizar quando o SQLite muda usam `withObservables` em **components** (não na screen). Exemplo:
+`NotificationsScreen` → `useNotificationsScreen` + `NotificationsList` / `NotificationItem` com
+`withObservables` (queries, `observeCount`, re-render por registro). Isso segue a API oficial. Ver
+[Connecting Components / Understanding withObservables](https://watermelondb.dev/docs/Components#understanding-withobservables).
+
 Código (arquivos, pastas, identificadores) em inglês. Strings de UI em português.
 
 ## Fluxos do produto

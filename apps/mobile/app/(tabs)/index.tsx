@@ -1,24 +1,29 @@
-import { StyleSheet } from 'react-native'
 import { ThemedBackground } from '@/components/ui/ThemedBackground'
 import { ThemedText } from '@/components/ui/ThemedText'
+import { useHomeScreen } from '@/hooks/home/useHomeScreen'
+import { spacing } from '@/utils/dimensions'
+import { StyleSheet, View } from 'react-native'
 
-export default function Home() {
+export default function HomeScreen() {
+  const { greeting, subtitle } = useHomeScreen()
+
   return (
-    //TODO: add a logout button and make the logout function
-    <ThemedBackground>
-      <ThemedText variant="headline" style={styles.text} text="Test" />
+    <ThemedBackground style={styles.screen}>
+      <View style={styles.content}>
+        <ThemedText variant="headline" text={greeting} />
+        <ThemedText variant="body" text={subtitle} tone="muted" />
+      </View>
     </ThemedBackground>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
-    flexDirection: 'column',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
   },
-  text: {
-    color: 'brown',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  content: {
+    gap: spacing.sm,
   },
 })
