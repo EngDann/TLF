@@ -55,9 +55,6 @@ __pycache__/
 *.pyc
 .python-version
 
-# Local notes
-REFACTOR_BACKLOG.md
-
 # OS and editors
 .DS_Store
 *.pem
