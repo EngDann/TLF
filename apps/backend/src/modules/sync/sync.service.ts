@@ -132,59 +132,59 @@ export class SyncService {
     const { userId, changes } = dto
 
     try {
-      await this.prisma.$transaction(async () => {
+      await this.prisma.$transaction(async (tx) => {
         await this.applyTableChanges(userId, changes.categories, {
-          create: (record) => this.categoriesService.syncCreate(userId, record),
-          update: (record) => this.categoriesService.syncUpdate(userId, record),
-          remove: (id) => this.categoriesService.remove({ userId, id }),
+          create: (record) => this.categoriesService.syncCreate(userId, record, tx),
+          update: (record) => this.categoriesService.syncUpdate(userId, record, tx),
+          remove: (id) => this.categoriesService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.sub_categories, {
-          create: (record) => this.subCategoriesService.syncCreate(userId, record),
-          update: (record) => this.subCategoriesService.syncUpdate(userId, record),
-          remove: (id) => this.subCategoriesService.remove({ userId, id }),
+          create: (record) => this.subCategoriesService.syncCreate(userId, record, tx),
+          update: (record) => this.subCategoriesService.syncUpdate(userId, record, tx),
+          remove: (id) => this.subCategoriesService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.institutions, {
-          create: (record) => this.institutionsService.syncCreate(userId, record),
-          update: (record) => this.institutionsService.syncUpdate(userId, record),
-          remove: (id) => this.institutionsService.remove({ userId, id }),
+          create: (record) => this.institutionsService.syncCreate(userId, record, tx),
+          update: (record) => this.institutionsService.syncUpdate(userId, record, tx),
+          remove: (id) => this.institutionsService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.budgets, {
-          create: (record) => this.budgetService.syncCreate(userId, record),
-          update: (record) => this.budgetService.syncUpdate(userId, record),
-          remove: (id) => this.budgetService.remove({ userId, id }),
+          create: (record) => this.budgetService.syncCreate(userId, record, tx),
+          update: (record) => this.budgetService.syncUpdate(userId, record, tx),
+          remove: (id) => this.budgetService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.accounts, {
-          create: (record) => this.accountsService.syncCreate(userId, record),
-          update: (record) => this.accountsService.syncUpdate(userId, record),
-          remove: (id) => this.accountsService.remove({ userId, id }),
+          create: (record) => this.accountsService.syncCreate(userId, record, tx),
+          update: (record) => this.accountsService.syncUpdate(userId, record, tx),
+          remove: (id) => this.accountsService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.invoices, {
-          create: (record) => this.invoiceService.syncCreate(userId, record),
-          update: (record) => this.invoiceService.syncUpdate(userId, record),
-          remove: (id) => this.invoiceService.remove({ userId, id }),
+          create: (record) => this.invoiceService.syncCreate(userId, record, tx),
+          update: (record) => this.invoiceService.syncUpdate(userId, record, tx),
+          remove: (id) => this.invoiceService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.recurrences, {
-          create: (record) => this.recurrenceService.syncCreate(userId, record),
-          update: (record) => this.recurrenceService.syncUpdate(userId, record),
-          remove: (id) => this.recurrenceService.removeForSync({ userId, id }),
+          create: (record) => this.recurrenceService.syncCreate(userId, record, tx),
+          update: (record) => this.recurrenceService.syncUpdate(userId, record, tx),
+          remove: (id) => this.recurrenceService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.transactions, {
-          create: (record) => this.transactionsService.syncCreate(userId, record),
-          update: (record) => this.transactionsService.syncUpdate(userId, record),
-          remove: (id) => this.transactionsService.remove({ userId, id }),
+          create: (record) => this.transactionsService.syncCreate(userId, record, tx),
+          update: (record) => this.transactionsService.syncUpdate(userId, record, tx),
+          remove: (id) => this.transactionsService.remove({ userId, id }, tx),
         })
 
         await this.applyTableChanges(userId, changes.notifications, {
-          create: (record) => this.notificationsService.syncCreate(userId, record),
-          update: (record) => this.notificationsService.syncUpdate(userId, record),
-          remove: (id) => this.notificationsService.remove({ userId, id }),
+          create: (record) => this.notificationsService.syncCreate(userId, record, tx),
+          update: (record) => this.notificationsService.syncUpdate(userId, record, tx),
+          remove: (id) => this.notificationsService.remove({ userId, id }, tx),
         })
       })
 

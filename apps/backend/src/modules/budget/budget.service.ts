@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '@common/prisma/prisma.service'
 import { createDeletedRecords } from '@common/sync/deleted-record.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { TableName } from 'generated/prisma/client'
 import { FindManyBudgetsDto } from './dto/find-many.dto'
 import { RemoveBudgetRequestDto } from './dto/remove.dto'
@@ -26,13 +27,14 @@ export class BudgetService {
     })
   }
 
-  async syncCreate(userId: string, dto: SyncBudgetDto) {
-    const category = await this.prisma.category.findUnique({ where: { id: dto.categoryId } })
+  async syncCreate(userId: string, dto: SyncBudgetDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const category = await db.category.findUnique({ where: { id: dto.categoryId } })
     if (!category) throw new NotFoundException('Categoria não encontrada')
     if (category.userId !== userId)
       throw new ForbiddenException('Categoria não pertence ao usuário')
 
-    return this.prisma.budget.upsert({
+    return db.budget.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -56,12 +58,13 @@ export class BudgetService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncBudgetDto) {
-    const budget = await this.prisma.budget.findUnique({ where: { id: dto.id } })
+  async syncUpdate(userId: string, dto: SyncBudgetDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const budget = await db.budget.findUnique({ where: { id: dto.id } })
     if (!budget) throw new NotFoundException('Orçamento não encontrado')
     if (budget.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.budget.update({
+    return db.budget.update({
       where: { id: dto.id },
       data: {
         categoryId: dto.categoryId,
@@ -74,16 +77,25 @@ export class BudgetService {
     })
   }
 
-  async remove(dto: RemoveBudgetRequestDto): Promise<void> {
+  async remove(dto: RemoveBudgetRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id } = dto
-    const budget = await this.prisma.budget.findUnique({ where: { id } })
+    const db = tx ?? this.prisma
+    const budget = await db.budget.findUnique({ where: { id } })
 
     if (!budget) throw new NotFoundException('Orçamento não encontrado')
     if (budget.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
-      await createDeletedRecords({ tx, userId, tableName: TableName.BUDGETS, recordIds: [id] })
-      await tx.budget.delete({ where: { id } })
-    })
+    const perform = async (client: SyncTx) => {
+      await createDeletedRecords({
+        tx: client,
+        userId,
+        tableName: TableName.BUDGETS,
+        recordIds: [id],
+      })
+      await client.budget.delete({ where: { id } })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 }

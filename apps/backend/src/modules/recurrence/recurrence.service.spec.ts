@@ -108,20 +108,20 @@ describe('RecurrenceService', () => {
     })
   })
 
-  describe('removeForSync', () => {
+  describe('remove', () => {
     it('deletes recurrence and records tombstone', async () => {
       prismaMock.recurrence.findUnique.mockResolvedValue(mockRecurrence)
       prismaMock.recurrence.delete.mockResolvedValue(mockRecurrence)
       prismaMock.deletedRecord.createMany.mockResolvedValue({ count: 1 })
 
-      await service.removeForSync({ userId: 'user-1', id: 'rec-1' })
+      await service.remove({ userId: 'user-1', id: 'rec-1' })
 
       expect(prismaMock.recurrence.delete).toHaveBeenCalledWith({ where: { id: 'rec-1' } })
     })
 
     it('throws NotFoundException when recurrence missing', async () => {
       prismaMock.recurrence.findUnique.mockResolvedValue(null)
-      await expect(service.removeForSync({ userId: 'user-1', id: 'rec-1' })).rejects.toThrow(
+      await expect(service.remove({ userId: 'user-1', id: 'rec-1' })).rejects.toThrow(
         NotFoundException,
       )
     })

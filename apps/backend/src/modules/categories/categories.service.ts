@@ -8,6 +8,7 @@ import {
   nullifyTransactionSubCategoryRefs,
 } from '@common/sync/set-null.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { TableName } from 'generated/prisma/client'
 import { FindManyCategoriesDto } from './dto/find-many.dto'
 import { RemoveCategoryRequestDto } from './dto/remove.dto'
@@ -30,8 +31,9 @@ export class CategoriesService {
     })
   }
 
-  async syncCreate(userId: string, dto: SyncCategoryDto) {
-    return this.prisma.category.upsert({
+  async syncCreate(userId: string, dto: SyncCategoryDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    return db.category.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -51,12 +53,13 @@ export class CategoriesService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncCategoryDto) {
-    const category = await this.prisma.category.findUnique({ where: { id: dto.id } })
+  async syncUpdate(userId: string, dto: SyncCategoryDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const category = await db.category.findUnique({ where: { id: dto.id } })
     if (!category) throw new NotFoundException('Categoria não encontrada')
     if (category.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.category.update({
+    return db.category.update({
       where: { id: dto.id },
       data: {
         name: dto.name,
@@ -67,47 +70,51 @@ export class CategoriesService {
     })
   }
 
-  async remove(dto: RemoveCategoryRequestDto): Promise<void> {
+  async remove(dto: RemoveCategoryRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id } = dto
-    const category = await this.prisma.category.findUnique({
+    const db = tx ?? this.prisma
+    const category = await db.category.findUnique({
       where: { id },
       include: { subCategories: true, budgets: true },
     })
     if (!category) throw new NotFoundException('Categoria não encontrada')
     if (category.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
+    const perform = async (client: SyncTx) => {
       await createDeletedRecords({
-        tx,
+        tx: client,
         userId,
         tableName: TableName.BUDGETS,
         recordIds: category.budgets.map((b) => b.id),
       })
-      await tx.budget.deleteMany({ where: { categoryId: id } })
+      await client.budget.deleteMany({ where: { categoryId: id } })
 
       for (const subCategory of category.subCategories) {
-        await nullifyTransactionSubCategoryRefs(tx, subCategory.id)
-        await nullifyRecurrenceSubCategoryRefs(tx, subCategory.id)
+        await nullifyTransactionSubCategoryRefs(client, subCategory.id)
+        await nullifyRecurrenceSubCategoryRefs(client, subCategory.id)
       }
 
-      await nullifyTransactionCategoryRefs(tx, id)
-      await nullifyRecurrenceCategoryRefs(tx, id)
+      await nullifyTransactionCategoryRefs(client, id)
+      await nullifyRecurrenceCategoryRefs(client, id)
 
       await Promise.all([
         createDeletedRecords({
-          tx,
+          tx: client,
           userId,
           tableName: TableName.SUB_CATEGORIES,
           recordIds: category.subCategories.map((s) => s.id),
         }),
         createDeletedRecords({
-          tx,
+          tx: client,
           userId,
           tableName: TableName.CATEGORIES,
           recordIds: [id],
         }),
       ])
-      await tx.category.delete({ where: { id } })
-    })
+      await client.category.delete({ where: { id } })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 }

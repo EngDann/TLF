@@ -1,3 +1,4 @@
+import { clearTokens } from '@/services/api/token-storage'
 import { create } from 'zustand'
 
 type User = { id: string; name: string; email: string }
@@ -20,6 +21,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     //TODO: Should we save refresh token and access token in the store? Considering that we already save it in the secure store?
     set({ user, accessToken, refreshToken, isAuthenticated: true }),
   logout: () => {
+    void clearTokens()
     set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false })
   },
 }))

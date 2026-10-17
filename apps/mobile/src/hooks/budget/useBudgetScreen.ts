@@ -39,7 +39,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
   const [type, setType] = useState<BudgetType>(initialValues?.type ?? 'BUDGET')
   const [amountLimit, setAmountLimit] = useState(initialValues?.amountLimit ?? 0)
   const [categoryId, setCategoryId] = useState(initialValues?.categoryId ?? '')
-  const [month, setMonth] = useState(initialValues?.month ?? new Date().getMonth())
+  const [month, setMonth] = useState(initialValues?.month ?? new Date().getMonth() + 1)
   const [year, setYear] = useState(initialValues?.year ?? new Date().getFullYear())
   const [submitting, setSubmitting] = useState(false)
   const [showKeypad, setShowKeypad] = useState(false)
@@ -71,7 +71,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
     const budget = await budgetQueries.getById(id)
     setName(budget.name)
     setAmountLimit(budget.amountLimit)
-    setMonth(budget.month - 1)
+    setMonth(budget.month)
     setYear(budget.year)
     setCategoryId(budget.categoryId)
   }
@@ -108,7 +108,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
     setName('orçamento')
     setAmountLimit(0)
     setCategoryId('')
-    setMonth(new Date().getMonth())
+    setMonth(new Date().getMonth() + 1)
     setYear(new Date().getFullYear())
     setSubmitAttempted(false)
     setFeedbackMessage(null)
@@ -123,7 +123,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
       const payload: BudgetData = {
         name,
         amountLimit,
-        month: month + 1,
+        month,
         year,
         categoryId: categoryId || undefined,
       }
@@ -154,7 +154,7 @@ export function useBudgetScreen(initialValues?: BudgetInitialValues) {
       await budgetQueries.update(id, {
         name,
         amountLimit,
-        month: month + 1,
+        month,
         year,
         categoryId: categoryId || undefined,
       })

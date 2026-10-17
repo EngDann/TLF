@@ -84,9 +84,12 @@ export default function CreateBudgetPage({ initialValues }: Props) {
             <FormField
               icon={Calendar}
               label="Mês"
-              value={`${new Date().getMonth() + 1}`}
+              value={String(form.month)}
               onPress={() => {}}
-              onChangeText={(text: string) => form.setMonth(Number(text) || new Date().getMonth())}
+              onChangeText={(text: string) => {
+                const parsed = Number(text)
+                form.setMonth(parsed >= 1 && parsed <= 12 ? parsed : new Date().getMonth() + 1)
+              }}
             />
 
             <FormField

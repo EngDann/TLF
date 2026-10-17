@@ -10,11 +10,13 @@ import { useFonts } from 'expo-font'
 import { useEffect } from 'react'
 import { ActivityIndicator } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useAuthHydration } from '@/hooks/auth/useAuthHydration'
 import { useSync } from '@/hooks/sync/useSync'
 
 void SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
+  const authReady = useAuthHydration()
   useSync()
   const colors = useThemeColor()
 
@@ -26,7 +28,7 @@ export default function RootLayout() {
     }
   }, [fontsLoaded])
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !authReady) {
     return (
       <>
         <ThemedStatusBar />

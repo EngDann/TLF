@@ -3,6 +3,7 @@ import { PrismaService } from '@common/prisma/prisma.service'
 import { createDeletedRecords } from '@common/sync/deleted-record.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
 import { AccountsService } from '@modules/accounts/accounts.service'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { TableName } from 'generated/prisma/client'
 import { FindManyInstitutionsDto } from './dto/find-many.dto'
 import { RemoveInstitutionRequestDto } from './dto/remove.dto'
@@ -27,8 +28,9 @@ export class InstitutionsService {
     })
   }
 
-  async syncCreate(userId: string, dto: SyncInstitutionDto) {
-    return this.prisma.institution.upsert({
+  async syncCreate(userId: string, dto: SyncInstitutionDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    return db.institution.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -48,12 +50,13 @@ export class InstitutionsService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncInstitutionDto) {
-    const institution = await this.prisma.institution.findUnique({ where: { id: dto.id } })
+  async syncUpdate(userId: string, dto: SyncInstitutionDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const institution = await db.institution.findUnique({ where: { id: dto.id } })
     if (!institution) throw new NotFoundException('Instituição não encontrada')
     if (institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.institution.update({
+    return db.institution.update({
       where: { id: dto.id },
       data: {
         name: dto.name,
@@ -64,9 +67,10 @@ export class InstitutionsService {
     })
   }
 
-  async remove(dto: RemoveInstitutionRequestDto): Promise<void> {
+  async remove(dto: RemoveInstitutionRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id: institutionId } = dto
-    const institution = await this.prisma.institution.findUnique({
+    const db = tx ?? this.prisma
+    const institution = await db.institution.findUnique({
       where: { id: institutionId },
       include: {
         accounts: {
@@ -81,10 +85,10 @@ export class InstitutionsService {
     if (!institution) throw new NotFoundException('Instituição não encontrada')
     if (institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
+    const perform = async (client: SyncTx) => {
       for (const account of institution.accounts) {
-        await this.accountsService.deleteAccountInTransaction({
-          tx,
+        await this.accountsService.removeWithDependents({
+          tx: client,
           userId,
           accountId: account.id,
           invoiceIds: account.invoices.map((i) => i.id),
@@ -94,12 +98,15 @@ export class InstitutionsService {
       }
 
       await createDeletedRecords({
-        tx,
+        tx: client,
         userId,
         tableName: TableName.INSTITUTIONS,
         recordIds: [institutionId],
       })
-      await tx.institution.delete({ where: { id: institutionId } })
-    })
+      await client.institution.delete({ where: { id: institutionId } })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 }

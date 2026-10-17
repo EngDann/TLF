@@ -3,8 +3,9 @@ import { PrismaService } from '@common/prisma/prisma.service'
 import { createDeletedRecords } from '@common/sync/deleted-record.util'
 import { nullifyTransactionDestinationAccountRefs } from '@common/sync/set-null.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { AccountType, Currency, TableName } from 'generated/prisma/client'
-import { DeleteAccountInTransactionDto } from './dto/delete-account-in-transaction.dto'
+import { RemoveAccountWithDependentsDto } from './dto/remove-with-dependents.dto'
 import { FindManyAccountsDto } from './dto/find-many.dto'
 import { RemoveAccountRequestDto } from './dto/remove.dto'
 import { SyncAccountDto } from './dto/sync-account.dto'
@@ -27,13 +28,14 @@ export class AccountsService {
     })
   }
 
-  private async assertInstitutionOwnership(userId: string, institutionId: string) {
-    const institution = await this.prisma.institution.findUnique({ where: { id: institutionId } })
+  private async assertInstitutionOwnership(userId: string, institutionId: string, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const institution = await db.institution.findUnique({ where: { id: institutionId } })
     if (!institution) throw new NotFoundException('Instituição não encontrada')
     if (institution.userId !== userId) throw new ForbiddenException('Acesso negado')
   }
 
-  async deleteAccountInTransaction(dto: DeleteAccountInTransactionDto): Promise<void> {
+  async removeWithDependents(dto: RemoveAccountWithDependentsDto): Promise<void> {
     const { tx, userId, accountId, invoiceIds, recurrenceIds, transactionIds } = dto
 
     await nullifyTransactionDestinationAccountRefs(tx, accountId)
@@ -58,9 +60,10 @@ export class AccountsService {
     await tx.account.delete({ where: { id: accountId } })
   }
 
-  async syncCreate(userId: string, dto: SyncAccountDto) {
-    await this.assertInstitutionOwnership(userId, dto.institutionId)
-    return this.prisma.account.upsert({
+  async syncCreate(userId: string, dto: SyncAccountDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    await this.assertInstitutionOwnership(userId, dto.institutionId, tx)
+    return db.account.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -91,15 +94,16 @@ export class AccountsService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncAccountDto) {
-    const account = await this.prisma.account.findUnique({
+  async syncUpdate(userId: string, dto: SyncAccountDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const account = await db.account.findUnique({
       where: { id: dto.id },
       include: { institution: true },
     })
     if (!account) throw new NotFoundException('Conta não encontrada')
     if (account.institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.account.update({
+    return db.account.update({
       where: { id: dto.id },
       data: {
         institutionId: dto.institutionId,
@@ -116,9 +120,10 @@ export class AccountsService {
     })
   }
 
-  async remove(dto: RemoveAccountRequestDto): Promise<void> {
+  async remove(dto: RemoveAccountRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id: accountId } = dto
-    const account = await this.prisma.account.findUnique({
+    const db = tx ?? this.prisma
+    const account = await db.account.findUnique({
       where: { id: accountId },
       include: {
         institution: true,
@@ -130,15 +135,18 @@ export class AccountsService {
     if (!account) throw new NotFoundException('Conta não encontrada')
     if (account.institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
-      await this.deleteAccountInTransaction({
-        tx,
+    const perform = async (client: SyncTx) => {
+      await this.removeWithDependents({
+        tx: client,
         userId,
         accountId,
         invoiceIds: account.invoices.map((i) => i.id),
         recurrenceIds: account.recurrences.map((r) => r.id),
         transactionIds: account.transactions.map((t) => t.id),
       })
-    })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 }

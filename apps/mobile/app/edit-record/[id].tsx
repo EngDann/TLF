@@ -1,13 +1,27 @@
-import { Pressable, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ArrowLeft } from 'lucide-react-native'
 import { TransactionForm } from '@/components/finance/transactions/TransactionForm'
+import { ThemedText } from '@/components/ui/ThemedText'
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { useEditRecordScreen } from '@/hooks/records/useEditRecordScreen'
 
 export default function EditRecordScreen() {
   const theme = useThemeColor()
-  const { title, mode, initialValues, handleBack, handleSuccess } = useEditRecordScreen()
+  const { title, mode, initialValues, loading, loadError, handleBack, handleSuccess } =
+    useEditRecordScreen()
+
+  if (loading || !initialValues) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.primary} style={{ marginTop: 48 }} />
+        ) : loadError ? (
+          <ThemedText text={loadError} variant="body" style={{ padding: 24 }} />
+        ) : null}
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>

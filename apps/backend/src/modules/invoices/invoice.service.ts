@@ -3,6 +3,7 @@ import { PrismaService } from '@common/prisma/prisma.service'
 import { createDeletedRecords } from '@common/sync/deleted-record.util'
 import { nullifyTransactionInvoiceRefs } from '@common/sync/set-null.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { InvoicePaymentStatus, InvoiceStatus, TableName } from 'generated/prisma/client'
 import { FindManyInvoicesDto } from './dto/find-many.dto'
 import { RemoveInvoiceRequestDto } from './dto/remove.dto'
@@ -37,8 +38,9 @@ export class InvoiceService {
     })
   }
 
-  private async assertAccountOwnership(userId: string, accountId: string) {
-    const account = await this.prisma.account.findUnique({
+  private async assertAccountOwnership(userId: string, accountId: string, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const account = await db.account.findUnique({
       where: { id: accountId },
       include: { institution: true },
     })
@@ -46,9 +48,10 @@ export class InvoiceService {
     if (account.institution.userId !== userId) throw new ForbiddenException('Acesso negado')
   }
 
-  async syncCreate(userId: string, dto: SyncInvoiceDto) {
-    await this.assertAccountOwnership(userId, dto.accountId)
-    return this.prisma.invoice.upsert({
+  async syncCreate(userId: string, dto: SyncInvoiceDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    await this.assertAccountOwnership(userId, dto.accountId, tx)
+    return db.invoice.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -79,15 +82,16 @@ export class InvoiceService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncInvoiceDto) {
-    const invoice = await this.prisma.invoice.findUnique({
+  async syncUpdate(userId: string, dto: SyncInvoiceDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const invoice = await db.invoice.findUnique({
       where: { id: dto.id },
       include: { account: { include: { institution: true } } },
     })
     if (!invoice) throw new NotFoundException('Fatura não encontrada')
     if (invoice.account.institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.invoice.update({
+    return db.invoice.update({
       where: { id: dto.id },
       data: {
         accountId: dto.accountId,
@@ -104,24 +108,28 @@ export class InvoiceService {
     })
   }
 
-  async remove(dto: RemoveInvoiceRequestDto): Promise<void> {
+  async remove(dto: RemoveInvoiceRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id: invoiceId } = dto
-    const invoice = await this.prisma.invoice.findUnique({
+    const db = tx ?? this.prisma
+    const invoice = await db.invoice.findUnique({
       where: { id: invoiceId },
       include: { account: { include: { institution: true } } },
     })
     if (!invoice) throw new NotFoundException('Fatura não encontrada')
     if (invoice.account.institution.userId !== userId) throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
-      await nullifyTransactionInvoiceRefs(tx, invoiceId)
+    const perform = async (client: SyncTx) => {
+      await nullifyTransactionInvoiceRefs(client, invoiceId)
       await createDeletedRecords({
-        tx,
+        tx: client,
         userId,
         tableName: TableName.INVOICES,
         recordIds: [invoiceId],
       })
-      await tx.invoice.delete({ where: { id: invoiceId } })
-    })
+      await client.invoice.delete({ where: { id: invoiceId } })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 }

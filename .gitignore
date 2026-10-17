@@ -55,7 +55,7 @@ __pycache__/
 *.pyc
 .python-version
 
-# Local notes (not shared)
+# Local notes
 REFACTOR_BACKLOG.md
 
 # OS and editors

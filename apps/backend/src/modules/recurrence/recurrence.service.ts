@@ -3,9 +3,10 @@ import { PrismaService } from '@common/prisma/prisma.service'
 import { createDeletedRecords } from '@common/sync/deleted-record.util'
 import { nullifyTransactionRecurrenceRefs } from '@common/sync/set-null.util'
 import { buildTimestampWhere } from '@common/sync/sync-query.util'
+import { SyncTx } from '@common/sync/sync-tx.type'
 import { TableName, TransactionStatus, TransactionType } from 'generated/prisma/client'
-import { FindManyRecurrencesSyncDto } from './dto/find-many-sync.dto'
-import { RemoveRecurrenceRequestDto } from './dto/remove-sync.dto'
+import { FindManyRecurrencesDto } from './dto/find-many.dto'
+import { RemoveRecurrenceRequestDto } from './dto/remove.dto'
 import { SyncRecurrenceDto } from './dto/sync-recurrence.dto'
 
 @Injectable()
@@ -14,7 +15,7 @@ export class RecurrenceService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  findMany(dto: FindManyRecurrencesSyncDto) {
+  findMany(dto: FindManyRecurrencesDto) {
     const { userId, id, accountId, categoryId, isActive, createdAfter, updatedAfter } = dto
 
     return this.prisma.recurrence.findMany({
@@ -29,9 +30,10 @@ export class RecurrenceService {
     })
   }
 
-  async syncCreate(userId: string, dto: SyncRecurrenceDto) {
-    await this.assertAccountOwnership(userId, dto.accountId)
-    return this.prisma.recurrence.upsert({
+  async syncCreate(userId: string, dto: SyncRecurrenceDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    await this.assertAccountOwnership(userId, dto.accountId, tx)
+    return db.recurrence.upsert({
       where: { id: dto.id },
       create: {
         id: dto.id,
@@ -62,8 +64,9 @@ export class RecurrenceService {
     })
   }
 
-  async syncUpdate(userId: string, dto: SyncRecurrenceDto) {
-    const recurrence = await this.prisma.recurrence.findUnique({
+  async syncUpdate(userId: string, dto: SyncRecurrenceDto, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const recurrence = await db.recurrence.findUnique({
       where: { id: dto.id },
       include: { account: { include: { institution: true } } },
     })
@@ -71,7 +74,7 @@ export class RecurrenceService {
     if (recurrence.account.institution.userId !== userId)
       throw new ForbiddenException('Acesso negado')
 
-    return this.prisma.recurrence.update({
+    return db.recurrence.update({
       where: { id: dto.id },
       data: {
         accountId: dto.accountId,
@@ -88,9 +91,10 @@ export class RecurrenceService {
     })
   }
 
-  async removeForSync(dto: RemoveRecurrenceRequestDto): Promise<void> {
+  async remove(dto: RemoveRecurrenceRequestDto, tx?: SyncTx): Promise<void> {
     const { userId, id: recurrenceId } = dto
-    const recurrence = await this.prisma.recurrence.findUnique({
+    const db = tx ?? this.prisma
+    const recurrence = await db.recurrence.findUnique({
       where: { id: recurrenceId },
       include: { account: { include: { institution: true } } },
     })
@@ -98,16 +102,19 @@ export class RecurrenceService {
     if (recurrence.account.institution.userId !== userId)
       throw new ForbiddenException('Acesso negado')
 
-    await this.prisma.$transaction(async (tx) => {
-      await nullifyTransactionRecurrenceRefs(tx, recurrenceId)
+    const perform = async (client: SyncTx) => {
+      await nullifyTransactionRecurrenceRefs(client, recurrenceId)
       await createDeletedRecords({
-        tx,
+        tx: client,
         userId,
         tableName: TableName.RECURRENCES,
         recordIds: [recurrenceId],
       })
-      await tx.recurrence.delete({ where: { id: recurrenceId } })
-    })
+      await client.recurrence.delete({ where: { id: recurrenceId } })
+    }
+
+    if (tx) await perform(tx)
+    else await this.prisma.$transaction(perform)
   }
 
   async generateTransactionsFromRecurrences() {
@@ -172,8 +179,9 @@ export class RecurrenceService {
     this.logger.log('Recurrence job finished successfully')
   }
 
-  private async assertAccountOwnership(userId: string, accountId: string) {
-    const account = await this.prisma.account.findUnique({
+  private async assertAccountOwnership(userId: string, accountId: string, tx?: SyncTx) {
+    const db = tx ?? this.prisma
+    const account = await db.account.findUnique({
       where: { id: accountId },
       include: { institution: true },
     })

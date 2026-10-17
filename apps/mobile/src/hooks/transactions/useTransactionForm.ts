@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { createTransaction } from '@/services/database/repository/transaction'
+import { createTransaction, updateTransaction } from '@/services/database/repository/transaction'
 import { TransactionType } from '@/services/database/models/transaction'
 import { ACCOUNTS, MAX_AMOUNT_CENTS, TRANSACTION_FORM_ERRORS } from '@/utils/transactionForm'
 
 export type TransactionInitialValues = {
+  id?: string
   type?: TransactionType
   amountCents?: number
   accountId?: string
@@ -25,6 +26,9 @@ export function useTransactionForm(initialValues?: TransactionInitialValues) {
   const [showKeypad, setShowKeypad] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
+
+  const transactionId = initialValues?.id
+  const isEdit = Boolean(transactionId)
 
   const handleKeypad = useCallback((key: string) => {
     setAmountCents((prev) => {
@@ -67,24 +71,31 @@ export function useTransactionForm(initialValues?: TransactionInitialValues) {
     setSubmitError(null)
   }
 
+  const buildPayload = () => ({
+    amount,
+    description: notes.trim() || categoryId || type,
+    date,
+    type,
+    status: 'COMPLETED' as const,
+    accountId,
+    categoryId: categoryId || 'uncategorized',
+    subcategoryId: subcategoryId || null,
+    destinationAccountId: type === 'TRANSFER' ? destinationAccountId : null,
+  })
+
   const submit = async (onSuccess?: () => void) => {
     setSubmitAttempted(true)
     if (!isValid || submitting) return
     setSubmitError(null)
     setSubmitting(true)
     try {
-      await createTransaction({
-        amount,
-        description: notes.trim() || categoryId || type,
-        date,
-        type,
-        status: 'COMPLETED',
-        accountId,
-        categoryId: categoryId || 'uncategorized',
-        subcategoryId: subcategoryId || null,
-        destinationAccountId: type === 'TRANSFER' ? destinationAccountId : null,
-      })
-      reset()
+      const payload = buildPayload()
+      if (isEdit && transactionId) {
+        await updateTransaction(transactionId, payload)
+      } else {
+        await createTransaction(payload)
+        reset()
+      }
       onSuccess?.()
     } catch (error) {
       const message = error instanceof Error ? error.message : TRANSACTION_FORM_ERRORS.submit
@@ -118,5 +129,6 @@ export function useTransactionForm(initialValues?: TransactionInitialValues) {
     isValid,
     submitting,
     submit,
+    isEdit,
   }
 }
